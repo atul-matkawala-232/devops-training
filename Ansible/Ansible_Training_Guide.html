@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ansible — Complete Beginner's Training Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #0a0e1a;
+  --bg2:       #0f1625;
+  --bg3:       #151d30;
+  --panel:     #1a2338;
+  --border:    #1e2d47;
+  --accent:    #f97316;
+  --accent2:   #3b82f6;
+  --accent3:   #10b981;
+  --accent4:   #a855f7;
+  --gold:      #f59e0b;
+  --text:      #e2e8f0;
+  --muted:     #8899b4;
+  --code-bg:   #0d1117;
+  --success:   #10b981;
+  --error:     #ef4444;
+  --warn:      #f59e0b;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Lora', Georgia, serif;
+  font-size: 16px;
+  line-height: 1.75;
+  overflow-x: hidden;
+}
+
+/* ── Noise grain overlay ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.4;
+}
+
+/* ── Navigation ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(10,14,26,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+
+.nav-logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.nav-links {
+  display: flex;
+  gap: 0.25rem;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--muted);
+  text-decoration: none;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+.nav-links a:hover { color: var(--text); background: var(--panel); }
+
+/* ── Hero ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6rem 2rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(59,130,246,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black, transparent);
+}
+
+.hero-glow {
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(249,115,22,0.12) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -60%);
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(249,115,22,0.1);
+  border: 1px solid rgba(249,115,22,0.3);
+  color: var(--accent);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.4rem 1rem;
+  border-radius: 100px;
+  margin-bottom: 2rem;
+  animation: fadeUp 0.6s ease both;
+}
+
+.hero h1 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: clamp(3.5rem, 10vw, 7rem);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: #fff;
+  animation: fadeUp 0.6s 0.1s ease both;
+}
+
+.hero h1 .accent { color: var(--accent); }
+
+.hero-sub {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--muted);
+  margin-top: 1.25rem;
+  animation: fadeUp 0.6s 0.2s ease both;
+}
+
+.hero-meta {
+  display: flex;
+  gap: 2rem;
+  margin-top: 2.5rem;
+  animation: fadeUp 0.6s 0.3s ease both;
+}
+
+.hero-stat {
+  text-align: center;
+}
+.hero-stat .val {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--accent2);
+  display: block;
+}
+.hero-stat .label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-family: 'Syne', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hero-cta {
+  margin-top: 3rem;
+  display: flex;
+  gap: 1rem;
+  animation: fadeUp 0.6s 0.4s ease both;
+}
+
+.btn {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.75rem 1.75rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: #ea6d0e; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(249,115,22,0.3); }
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { background: var(--panel); border-color: var(--muted); }
+
+/* ── Agenda strip ── */
+.agenda {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 3rem 0;
+  overflow: hidden;
+}
+
+.agenda-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.section-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+}
+
+.agenda-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.agenda-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  transition: border-color 0.2s;
+}
+.agenda-item:hover { border-color: var(--accent2); }
+
+.agenda-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--accent);
+  background: rgba(249,115,22,0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.agenda-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.agenda-desc { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+
+/* ── Main content ── */
+main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 4rem 2rem 6rem;
+}
+
+/* ── Section headers ── */
+.sec-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 5rem 0 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.sec-letter {
+  font-family: 'Syne', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+  opacity: 0.25;
+  user-select: none;
+}
+
+.sec-title-wrap { flex: 1; }
+.sec-tag {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 0.15rem;
+}
+.sec-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.9rem;
+  color: #fff;
+  line-height: 1.1;
+}
+
+/* ── Headings ── */
+h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 2.5rem 0 0.75rem;
+}
+h2::before {
+  content: '// ';
+  color: var(--accent2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+}
+
+h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--accent3);
+  margin: 1.75rem 0 0.5rem;
+}
+
+p { color: var(--text); margin-bottom: 1rem; }
+
+/* ── Callouts ── */
+.callout {
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin: 1.5rem 0;
+  border-left: 4px solid;
+}
+.callout-orange { background: rgba(249,115,22,0.08); border-color: var(--accent); }
+.callout-blue   { background: rgba(59,130,246,0.08);  border-color: var(--accent2); }
+.callout-green  { background: rgba(16,185,129,0.08);  border-color: var(--accent3); }
+.callout-purple { background: rgba(168,85,247,0.08);  border-color: var(--accent4); }
+
+.callout-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.callout-orange .callout-title { color: var(--accent); }
+.callout-blue   .callout-title { color: var(--accent2); }
+.callout-green  .callout-title { color: var(--accent3); }
+.callout-purple .callout-title { color: var(--accent4); }
+
+/* ── Code blocks ── */
+.code-block {
+  background: var(--code-bg);
+  border: 1px solid #1e2d47;
+  border-radius: 8px;
+  margin: 1.25rem 0;
+  overflow: hidden;
+}
+
+.code-header {
+  background: #161b22;
+  border-bottom: 1px solid #1e2d47;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.code-dots { display: flex; gap: 6px; }
+.code-dots span {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.dot-r { background: #ff5f57; }
+.dot-y { background: #febc2e; }
+.dot-g { background: #28c840; }
+
+.code-filename {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-left: 0.5rem;
+}
+
+pre {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  color: #c9d1d9;
+}
+
+.hl-comment { color: #8b949e; }
+.hl-key     { color: #79c0ff; }
+.hl-val     { color: #a5d6ff; }
+.hl-str     { color: #a8d8a8; }
+.hl-cmd     { color: #f0883e; }
+.hl-section { color: #d2a8ff; }
+.hl-ip      { color: #ffa657; }
+
+/* ── Tables ── */
+.tbl-wrap { overflow-x: auto; margin: 1.25rem 0; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+thead th {
+  background: var(--panel);
+  color: var(--accent2);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 2px solid var(--accent2);
+}
+
+tbody td {
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+
+tbody tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+tbody tr:hover td { background: rgba(59,130,246,0.05); }
+
+td:first-child {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--accent3);
+  white-space: nowrap;
+}
+
+/* ── Lists ── */
+ul, ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+li { margin-bottom: 0.35rem; color: var(--text); }
+li strong { color: #fff; }
+
+/* ── Architecture diagram ── */
+.arch-diagram {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2rem;
+  margin: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.arch-box {
+  background: var(--panel);
+  border: 2px solid var(--accent2);
+  border-radius: 8px;
+  padding: 1rem 2rem;
+  text-align: center;
+  min-width: 200px;
+}
+.arch-box.orange { border-color: var(--accent); }
+.arch-box.green  { border-color: var(--accent3); }
+
+.arch-box-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent2);
+  margin-bottom: 0.25rem;
+}
+.arch-box.orange .arch-box-title { color: var(--accent); }
+.arch-box.green  .arch-box-title { color: var(--accent3); }
+
+.arch-box-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+}
+.arch-box-sub { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+
+.arch-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  gap: 0.2rem;
+}
+.arch-arrow-line {
+  width: 2px; height: 40px;
+  background: linear-gradient(to bottom, var(--accent2), var(--accent3));
+}
+
+.arch-nodes {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ── Step boxes ── */
+.steps { counter-reset: step; display: flex; flex-direction: column; gap: 1rem; margin: 1.25rem 0; }
+
+.step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  counter-increment: step;
+}
+
+.step::before {
+  content: counter(step);
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--accent);
+  background: rgba(249,115,22,0.12);
+  border-radius: 6px;
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.step-content strong {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+.step-content p { margin: 0; font-size: 0.9rem; }
+
+/* ── Summary table ── */
+.summary-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 1.5rem 0;
+}
+.summary-card h3 {
+  margin-top: 0;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ──────────────────────────────────────────
+   QUIZ
+──────────────────────────────────────────── */
+.quiz-section {
+  background: var(--bg2);
+  border-top: 2px solid var(--accent);
+  padding: 5rem 0 6rem;
+  margin-top: 5rem;
+}
+
+.quiz-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.quiz-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.quiz-hero .section-label { justify-content: center; display: block; }
+
+.quiz-hero h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 0.5rem;
+}
+.quiz-hero h2::before { display: none; }
+.quiz-hero p { color: var(--muted); font-style: italic; }
+
+.quiz-progress-bar {
+  background: var(--border);
+  border-radius: 100px;
+  height: 4px;
+  margin: 1.5rem 0 2.5rem;
+  overflow: hidden;
+}
+.quiz-progress-fill {
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  height: 100%;
+  border-radius: 100px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+.quiz-counter {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: right;
+  margin-top: -2rem;
+  margin-bottom: 2rem;
+}
+
+.quiz-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  transform: translateY(16px);
+  animation: fadeUp 0.5s ease forwards;
+  transition: border-color 0.3s;
+}
+
+.quiz-card.answered-correct { border-color: var(--accent3); }
+.quiz-card.answered-wrong   { border-color: var(--error); }
+
+.quiz-q-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.6rem;
+}
+
+.quiz-question {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.4;
+  margin-bottom: 1.25rem;
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.quiz-option {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  font-family: 'Lora', serif;
+  font-size: 0.9rem;
+  color: var(--text);
+  transition: all 0.2s;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.quiz-option::before {
+  content: attr(data-letter);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--border);
+  border-radius: 4px;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.quiz-option:hover:not(:disabled) {
+  border-color: var(--accent2);
+  background: rgba(59,130,246,0.06);
+  transform: translateX(4px);
+}
+.quiz-option:hover:not(:disabled)::before { background: var(--accent2); color: #fff; }
+
+.quiz-option.correct {
+  border-color: var(--accent3) !important;
+  background: rgba(16,185,129,0.1) !important;
+  color: #fff;
+}
+.quiz-option.correct::before { background: var(--accent3) !important; color: #fff !important; }
+
+.quiz-option.wrong {
+  border-color: var(--error) !important;
+  background: rgba(239,68,68,0.1) !important;
+  color: #fff;
+}
+.quiz-option.wrong::before { background: var(--error) !important; color: #fff !important; }
+
+.quiz-option.show-correct {
+  border-color: var(--accent3) !important;
+  background: rgba(16,185,129,0.06) !important;
+}
+.quiz-option.show-correct::before { background: var(--accent3) !important; color: #fff !important; }
+
+.quiz-option:disabled { cursor: not-allowed; }
+
+.quiz-explanation {
+  display: none;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-top: 1rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.quiz-explanation.visible { display: block; }
+.quiz-explanation strong { color: var(--text); }
+
+.quiz-score-panel {
+  display: none;
+  text-align: center;
+  padding: 3rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  margin-top: 2rem;
+}
+.quiz-score-panel.visible { display: block; }
+
+.score-ring {
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid var(--accent3);
+  box-shadow: 0 0 40px rgba(16,185,129,0.2);
+}
+.score-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--accent3);
+  line-height: 1;
+}
+.score-total {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.score-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+.score-msg { color: var(--muted); font-style: italic; margin-bottom: 1.5rem; }
+
+.btn-retry {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.75rem 2rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-retry:hover { background: #ea6d0e; transform: translateY(-2px); }
+
+/* ── Footer ── */
+footer {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 2rem;
+  text-align: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+footer span { color: var(--accent); }
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Stagger quiz cards ── */
+.quiz-card:nth-child(1)  { animation-delay: 0.05s; }
+.quiz-card:nth-child(2)  { animation-delay: 0.10s; }
+.quiz-card:nth-child(3)  { animation-delay: 0.15s; }
+.quiz-card:nth-child(4)  { animation-delay: 0.20s; }
+.quiz-card:nth-child(5)  { animation-delay: 0.25s; }
+.quiz-card:nth-child(6)  { animation-delay: 0.30s; }
+.quiz-card:nth-child(7)  { animation-delay: 0.35s; }
+.quiz-card:nth-child(8)  { animation-delay: 0.40s; }
+.quiz-card:nth-child(9)  { animation-delay: 0.45s; }
+.quiz-card:nth-child(10) { animation-delay: 0.50s; }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .hero h1 { font-size: 3rem; }
+  .hero-meta { gap: 1rem; }
+  .arch-nodes { gap: 0.5rem; }
+}
+
+code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82em;
+  background: rgba(59,130,246,0.1);
+  color: var(--accent2);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Ansible · Training</div>
+  <ul class="nav-links">
+    <li><a href="#section-a">Intro</a></li>
+    <li><a href="#section-b">Install</a></li>
+    <li><a href="#section-c">Architecture</a></li>
+    <li><a href="#section-d">Inventory</a></li>
+    <li><a href="#section-e">Playbooks</a></li>
+    <li><a href="#section-f">First Run</a></li>
+    <li><a href="#quiz">Quiz</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-badge">⚡ Beginner-Friendly Training</div>
+  <h1>ANSIBLE<br><span class="accent">Training</span></h1>
+  <p class="hero-sub">Complete Beginner's Guide — From Zero to First Playbook</p>
+  <div class="hero-meta">
+    <div class="hero-stat"><span class="val">3hrs</span><span class="label">Duration</span></div>
+    <div class="hero-stat"><span class="val">6</span><span class="label">Sections</span></div>
+    <div class="hero-stat"><span class="val">Lab</span><span class="label">Hands-On</span></div>
+    <div class="hero-stat"><span class="val">10</span><span class="label">Quiz Q's</span></div>
+  </div>
+  <div class="hero-cta">
+    <a href="#section-a" class="btn btn-primary">Start Learning</a>
+    <a href="#quiz" class="btn btn-outline">Jump to Quiz</a>
+  </div>
+</section>
+
+<!-- AGENDA -->
+<section class="agenda">
+  <div class="agenda-inner">
+    <div class="section-label">Class Schedule</div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:0;">3-Hour Agenda</h2>
+    <div class="agenda-grid">
+      <div class="agenda-item">
+        <span class="agenda-time">00:00 – 00:25</span>
+        <div><div class="agenda-title">Section A — Introduction</div><div class="agenda-desc">Why Ansible, what it solves, how it works</div></div>
+      </div>
+      <div class="agenda-item">
+        <span class="agenda-time">00:25 – 00:50</span>
+        <div><div class="agenda-title">Section B — Installation</div><div class="agenda-desc">Windows (WSL), Linux, macOS setup</div></div>
+      </div>
+      <div class="agenda-item">
+        <span class="agenda-time">00:50 – 01:20</span>
+        <div><div class="agenda-title">Section C — Architecture</div><div class="agenda-desc">Control Node, Managed Node, Inventory concepts</div></div>
+      </div>
+      <div class="agenda-item">
+        <span class="agenda-time">01:20 – 01:55</span>
+        <div><div class="agenda-title">Section D — Inventory</div><div class="agenda-desc">Hands-on ping demo, INI vs YAML formats</div></div>
+      </div>
+      <div class="agenda-item">
+        <span class="agenda-time">01:55 – 02:20</span>
+        <div><div class="agenda-title">Section E — Playbook Concepts</div><div class="agenda-desc">Playbook, Play, Task, Module explained</div></div>
+      </div>
+      <div class="agenda-item">
+        <span class="agenda-time">02:20 – 03:00</span>
+        <div><div class="agenda-title">Section F — First Playbook</div><div class="agenda-desc">Write, run, verify a real playbook on EC2</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN CONTENT -->
+<main>
+
+<!-- ─── SECTION A ─────────────────────────────────── -->
+<div class="sec-header" id="section-a">
+  <div class="sec-letter">A</div>
+  <div class="sec-title-wrap">
+    <span class="sec-tag">Section A · 25 min</span>
+    <div class="sec-title">Introduction to Ansible</div>
+  </div>
+</div>
+
+<h2>The Problem: Managing Many Servers Manually</h2>
+<p>Imagine you just joined a company as a system administrator. The company has 200 web servers, each running Linux. Your manager asks you to install the <code>nginx</code> web server on all 200 of them.</p>
+
+<div class="callout callout-orange">
+  <div class="callout-title">🧑‍💻 Real-World Scenario — Without Ansible</div>
+  You open 200 terminal windows, SSH into each server one by one, type the same install command 200 times, hope you don't make a typo, and pray every server gets the same configuration. This takes 5–6 hours and is extremely error-prone.
+</div>
+
+<h3>The Pain Points of Manual Work</h3>
+<ul>
+  <li><strong>Time-consuming</strong> — Logging into 200 machines manually can take an entire workday.</li>
+  <li><strong>Error-prone</strong> — A single wrong command on the wrong server can break production.</li>
+  <li><strong>Not repeatable</strong> — You must redo every step whenever something changes.</li>
+  <li><strong>Not trackable</strong> — Hard to know what was done, by whom, and when.</li>
+  <li><strong>Not scalable</strong> — What if you have 2,000 servers next year?</li>
+</ul>
+
+<h2>What is Ansible?</h2>
+<p>Ansible is an open-source IT automation tool. It lets you <em>describe</em> what you want your servers to look like — and then it makes it happen automatically, on all servers at the same time.</p>
+
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Detail</th><th>Info</th></tr></thead>
+  <tbody>
+    <tr><td>Created by</td><td>Michael DeHaan, 2012. Acquired by Red Hat in 2015.</td></tr>
+    <tr><td>Language</td><td>Written in Python</td></tr>
+    <tr><td>License</td><td>Open Source (GNU GPL)</td></tr>
+    <tr><td>Config format</td><td>YAML (Yet Another Markup Language)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-blue">
+  <div class="callout-title">💡 Simple Analogy</div>
+  Think of Ansible like a recipe book. You write a recipe (called a <strong>Playbook</strong>) that says "install nginx, start it, and make sure it runs on boot." Ansible reads that recipe and applies it to every server you point it at — simultaneously.
+</div>
+
+<h2>How Ansible Solves the Problem</h2>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Feature</th><th>What it means</th></tr></thead>
+  <tbody>
+    <tr><td>Agentless</td><td>Ansible needs NO software installed on target servers. It connects over SSH. Nothing to maintain on managed machines.</td></tr>
+    <tr><td>Idempotent</td><td>Run the same playbook 10 times — it only makes changes when needed. If nginx is already installed, Ansible skips it.</td></tr>
+    <tr><td>Declarative</td><td>You describe the desired end-state ("nginx should be installed"), not step-by-step instructions. Ansible figures out the steps.</td></tr>
+    <tr><td>Parallel</td><td>Ansible can run tasks on 200 servers simultaneously, not one by one.</td></tr>
+    <tr><td>Human-readable</td><td>Playbooks are written in YAML — a format that reads almost like English sentences.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-green">
+  <div class="callout-title">✅ With Ansible — Same Scenario</div>
+  You write ONE playbook file. Run ONE command. Ansible SSHs into all 200 servers in parallel, installs nginx, and reports back with a full success/failure summary. This takes 2 minutes instead of 6 hours.
+</div>
+
+<!-- ─── SECTION B ─────────────────────────────────── -->
+<div class="sec-header" id="section-b">
+  <div class="sec-letter">B</div>
+  <div class="sec-title-wrap">
+    <span class="sec-tag">Section B · 25 min</span>
+    <div class="sec-title">Installing Ansible</div>
+  </div>
+</div>
+
+<div class="callout callout-orange">
+  <div class="callout-title">⚠️ Important Note</div>
+  Ansible can only be installed on <strong>Linux or macOS</strong>. On Windows, you must use <strong>WSL</strong> (Windows Subsystem for Linux), which gives you a Linux environment inside Windows.
+</div>
+
+<h2>Installing on Windows (via WSL)</h2>
+
+<h3>Step 1 — Enable WSL</h3>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">PowerShell (as Administrator)</span></div>
+  <pre><span class="hl-comment"># Run this in PowerShell as Administrator</span>
+wsl --install
+
+<span class="hl-comment"># After restart, WSL installs Ubuntu by default.
+# Open "Ubuntu" from the Start Menu to get a Linux terminal.</span></pre>
+</div>
+
+<h3>Step 2 — Install Ansible inside WSL (Ubuntu)</h3>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">Ubuntu Terminal (inside WSL)</span></div>
+  <pre><span class="hl-comment"># Update package list</span>
+<span class="hl-cmd">sudo apt update</span>
+
+<span class="hl-comment"># Install required tool</span>
+<span class="hl-cmd">sudo apt install software-properties-common -y</span>
+
+<span class="hl-comment"># Add Ansible's official repository</span>
+<span class="hl-cmd">sudo add-apt-repository --yes --update ppa:ansible/ansible</span>
+
+<span class="hl-comment"># Install Ansible</span>
+<span class="hl-cmd">sudo apt install ansible -y</span>
+
+<span class="hl-comment"># Verify installation</span>
+<span class="hl-cmd">ansible --version</span></pre>
+</div>
+
+<h2>Installing on Ubuntu / Debian Linux</h2>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">Terminal</span></div>
+  <pre><span class="hl-cmd">sudo apt update</span>
+<span class="hl-cmd">sudo apt install software-properties-common -y</span>
+<span class="hl-cmd">sudo add-apt-repository --yes --update ppa:ansible/ansible</span>
+<span class="hl-cmd">sudo apt install ansible -y</span>
+<span class="hl-cmd">ansible --version</span></pre>
+</div>
+
+<h2>Installing on macOS</h2>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">macOS Terminal</span></div>
+  <pre><span class="hl-comment"># Step 1: Install Homebrew (if not already installed)</span>
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+<span class="hl-comment"># Step 2: Install Ansible</span>
+<span class="hl-cmd">brew install ansible</span>
+
+<span class="hl-comment"># Step 3: Verify</span>
+<span class="hl-cmd">ansible --version</span></pre>
+</div>
+
+<h2>Expected Output</h2>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">Expected terminal output</span></div>
+  <pre><span class="hl-str">ansible [core 2.16.0]</span>
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = ['~/.ansible/plugins/modules']
+  python version = 3.11.4
+  jinja version = 3.1.2
+  libyaml = True</pre>
+</div>
+
+<div class="callout callout-green">
+  <div class="callout-title">✅ You're Ready!</div>
+  If you see the output above, Ansible is successfully installed on your machine. Your machine is now the <strong>Control Node</strong>.
+</div>
+
+<!-- ─── SECTION C ─────────────────────────────────── -->
+<div class="sec-header" id="section-c">
+  <div class="sec-letter">C</div>
+  <div class="sec-title-wrap">
+    <span class="sec-tag">Section C · 30 min</span>
+    <div class="sec-title">Ansible Architecture</div>
+  </div>
+</div>
+
+<div class="callout callout-blue">
+  <div class="callout-title">🏗️ Architecture in One Sentence</div>
+  The <strong>Control Node</strong> reads a <strong>Playbook</strong> and an <strong>Inventory</strong> file, then connects to the <strong>Managed Nodes</strong> via SSH to execute tasks.
+</div>
+
+<h2>The Three Core Concepts</h2>
+
+<h3>1 — Control Node</h3>
+<p><strong>Definition:</strong> The machine where Ansible is installed. This is the machine YOU run commands from.</p>
+<ul>
+  <li>This is your laptop or a dedicated automation server.</li>
+  <li>Ansible is <strong>ONLY installed here</strong> — not on the target servers.</li>
+  <li>It reads playbooks and inventory files from here.</li>
+  <li><strong>Analogy:</strong> The chef's kitchen. The chef (Ansible) prepares and sends instructions from here.</li>
+</ul>
+
+<h3>2 — Managed Nodes (Target Machines)</h3>
+<p><strong>Definition:</strong> The servers that Ansible manages. Ansible SSHs into these to run tasks.</p>
+<ul>
+  <li>No Ansible installation needed here — just Python and SSH.</li>
+  <li>Could be web servers, database servers, AWS EC2 instances, Azure VMs, etc.</li>
+  <li><strong>Analogy:</strong> The restaurant branches. The head chef sends instructions; the branches follow them.</li>
+</ul>
+
+<h3>3 — Inventory</h3>
+<p><strong>Definition:</strong> A file listing all Managed Nodes (their IP addresses or hostnames) that Ansible should manage.</p>
+<ul>
+  <li>Think of it as your "address book" of servers.</li>
+  <li>Can be a simple INI text file or a YAML file.</li>
+  <li>Servers can be grouped (e.g., <code>[webservers]</code>, <code>[databases]</code>).</li>
+  <li><strong>Analogy:</strong> A staff directory. The Control Node needs to know <em>where</em> to connect.</li>
+</ul>
+
+<h2>Architecture Diagram</h2>
+<div class="arch-diagram">
+  <div class="arch-box orange">
+    <div class="arch-box-title">Control Node</div>
+    <div class="arch-box-name">Your Laptop / Automation Server</div>
+    <div class="arch-box-sub">Playbook · Inventory · Ansible Engine</div>
+  </div>
+  <div class="arch-arrow">
+    <div class="arch-arrow-line"></div>
+    <span style="font-size:0.7rem;color:var(--muted);">SSH connections (parallel)</span>
+    <div class="arch-arrow-line"></div>
+  </div>
+  <div class="arch-nodes">
+    <div class="arch-box green">
+      <div class="arch-box-title">Managed Node 1</div>
+      <div class="arch-box-name">EC2 Web Server</div>
+      <div class="arch-box-sub">13.233.45.67</div>
+    </div>
+    <div class="arch-box green">
+      <div class="arch-box-title">Managed Node 2</div>
+      <div class="arch-box-name">EC2 Web Server</div>
+      <div class="arch-box-sub">13.233.45.68</div>
+    </div>
+    <div class="arch-box green">
+      <div class="arch-box-title">Managed Node 3</div>
+      <div class="arch-box-name">EC2 DB Server</div>
+      <div class="arch-box-sub">10.0.0.5</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SECTION D ─────────────────────────────────── -->
+<div class="sec-header" id="section-d">
+  <div class="sec-letter">D</div>
+  <div class="sec-title-wrap">
+    <span class="sec-tag">Section D · 35 min</span>
+    <div class="sec-title">Inventory — Deep Dive + Hands-On Demo</div>
+  </div>
+</div>
+
+<p>An inventory file is a plain text file that tells Ansible which machines to manage. It contains IP addresses or hostnames of your servers. Think of it as the "contacts list" that Ansible dials up.</p>
+
+<div class="callout callout-blue">
+  <div class="callout-title">📋 Demo Context</div>
+  In this demo, we will use an AWS EC2 instance as our Managed Node. You will need the public IP of a running EC2 instance and the SSH private key (<code>.pem</code> file) used to launch it.
+</div>
+
+<h2>Hands-On Demo: Ping Test to AWS EC2</h2>
+<h3>Prerequisites</h3>
+<ul>
+  <li>AWS EC2 instance running (Amazon Linux 2 or Ubuntu)</li>
+  <li>Your <code>.pem</code> private key file (e.g., <code>my-key.pem</code>)</li>
+  <li>The EC2 public IP (e.g., <code>13.233.45.67</code>)</li>
+  <li>Port 22 (SSH) open in the EC2 Security Group</li>
+  <li>Ansible installed on your machine</li>
+</ul>
+
+<div class="steps">
+  <div class="step"><div class="step-content"><strong>Create Project Directory</strong><p>Set up your working folder and secure your key file.</p></div></div>
+  <div class="step"><div class="step-content"><strong>Create Inventory File</strong><p>Write an INI-format inventory listing your EC2 IP.</p></div></div>
+  <div class="step"><div class="step-content"><strong>Run Ansible Ping</strong><p>Execute <code>ansible all -i inventory.ini -m ping</code>.</p></div></div>
+  <div class="step"><div class="step-content"><strong>Verify "pong" Response</strong><p>SUCCESS + "pong" confirms Ansible can connect.</p></div></div>
+</div>
+
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">Terminal — Step by Step</span></div>
+  <pre><span class="hl-comment"># Step 1: Create project folder</span>
+<span class="hl-cmd">mkdir ansible-demo && cd ansible-demo</span>
+
+<span class="hl-comment"># Step 2: Copy and secure your .pem key</span>
+<span class="hl-cmd">cp ~/Downloads/my-key.pem .</span>
+<span class="hl-cmd">chmod 400 my-key.pem</span>
+
+<span class="hl-comment"># Step 3: Create the inventory file</span>
+<span class="hl-cmd">cat > inventory.ini << EOF</span>
+<span class="hl-section">[webservers]</span>
+<span class="hl-ip">13.233.45.67</span>  ansible_user=ec2-user  ansible_ssh_private_key_file=./my-key.pem
+<span class="hl-comment">EOF</span>
+
+<span class="hl-comment"># Step 4: Run the ping test</span>
+<span class="hl-cmd">ansible webservers -i inventory.ini -m ping</span></pre>
+</div>
+
+<h3>Expected Output (Success)</h3>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">Terminal output</span></div>
+  <pre><span class="hl-str">13.233.45.67 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}</span></pre>
+</div>
+
+<div class="callout callout-green">
+  <div class="callout-title">🎉 What Just Happened?</div>
+  Ansible read your <code>inventory.ini</code>, found the IP, SSHed into it using your <code>.pem</code> key, ran a small Python script on the remote machine, and returned "pong" — confirming the connection works. You never logged into the server manually!
+</div>
+
+<h2>Troubleshooting Common Issues</h2>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Error</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td>UNREACHABLE — port 22 timed out</td><td>Check EC2 Security Group: inbound rule for port 22 from 0.0.0.0/0 must exist.</td></tr>
+    <tr><td>Permission denied (publickey)</td><td>Check ansible_ssh_private_key_file path is correct. Ensure chmod 400 was run.</td></tr>
+    <tr><td>Wrong user error</td><td>Amazon Linux uses "ec2-user"; Ubuntu uses "ubuntu"; CentOS uses "centos".</td></tr>
+    <tr><td>UNPROTECTED PRIVATE KEY</td><td>Run: <code>chmod 400 my-key.pem</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>INI vs YAML Inventory Formats</h2>
+
+<h3>INI Format (Simple, Beginner-Friendly)</h3>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">inventory.ini</span></div>
+  <pre><span class="hl-comment"># Group: webservers</span>
+<span class="hl-section">[webservers]</span>
+<span class="hl-ip">13.233.45.67</span>  ansible_user=ec2-user  ansible_ssh_private_key_file=./my-key.pem
+<span class="hl-ip">13.233.45.68</span>  ansible_user=ec2-user  ansible_ssh_private_key_file=./my-key.pem
+
+<span class="hl-comment"># Group: databases</span>
+<span class="hl-section">[databases]</span>
+<span class="hl-ip">10.0.0.5</span>  ansible_user=ubuntu  ansible_ssh_private_key_file=./db-key.pem
+
+<span class="hl-comment"># Group of groups</span>
+<span class="hl-section">[production:children]</span>
+webservers
+databases</pre>
+</div>
+
+<h3>YAML Format (Advanced, More Flexible)</h3>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">inventory.yml</span></div>
+  <pre><span class="hl-key">all:</span>
+  <span class="hl-key">children:</span>
+    <span class="hl-key">webservers:</span>
+      <span class="hl-key">hosts:</span>
+        <span class="hl-ip">13.233.45.67:</span>
+          <span class="hl-key">ansible_user:</span> <span class="hl-val">ec2-user</span>
+          <span class="hl-key">ansible_ssh_private_key_file:</span> <span class="hl-val">./my-key.pem</span>
+        <span class="hl-ip">13.233.45.68:</span>
+          <span class="hl-key">ansible_user:</span> <span class="hl-val">ec2-user</span>
+          <span class="hl-key">ansible_ssh_private_key_file:</span> <span class="hl-val">./my-key.pem</span>
+    <span class="hl-key">databases:</span>
+      <span class="hl-key">hosts:</span>
+        <span class="hl-ip">10.0.0.5:</span>
+          <span class="hl-key">ansible_user:</span> <span class="hl-val">ubuntu</span>
+          <span class="hl-key">ansible_ssh_private_key_file:</span> <span class="hl-val">./db-key.pem</span></pre>
+</div>
+
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Use INI when...</th><th>Use YAML when...</th></tr></thead>
+  <tbody>
+    <tr><td>You are a beginner</td><td>You have complex nested group hierarchies</td></tr>
+    <tr><td>Small number of servers (&lt; 50)</td><td>You need host-level variables per server</td></tr>
+    <tr><td>Simple, flat inventory</td><td>Building dynamic inventory from scripts</td></tr>
+    <tr><td>Quick readability matters</td><td>Consistency with playbooks (all YAML)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ─── SECTION E ─────────────────────────────────── -->
+<div class="sec-header" id="section-e">
+  <div class="sec-letter">E</div>
+  <div class="sec-title-wrap">
+    <span class="sec-tag">Section E · 25 min</span>
+    <div class="sec-title">Playbook, Play, Task &amp; Module</div>
+  </div>
+</div>
+
+<div class="callout callout-blue">
+  <div class="callout-title">📖 Recipe Book Analogy</div>
+  Think of a <strong>Playbook</strong> as a recipe book. Inside it, there are <strong>Plays</strong> (recipes for a specific meal). Each Play has <strong>Tasks</strong> (individual cooking steps). Each Task uses a <strong>Module</strong> (a specific kitchen tool — like a knife, pan, or oven).
+</div>
+
+<h2>Module — The Smallest Unit</h2>
+<p>A Module is the smallest unit of work in Ansible. It is a reusable, built-in tool that does one specific thing.</p>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Module</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td>ping</td><td>Tests if Ansible can connect to a host.</td></tr>
+    <tr><td>apt / yum</td><td>Installs or removes packages (apt for Ubuntu/Debian, yum for CentOS/RHEL).</td></tr>
+    <tr><td>copy</td><td>Copies a file from Control Node to Managed Node.</td></tr>
+    <tr><td>service</td><td>Starts, stops, or restarts a service (nginx, apache, mysql, etc.).</td></tr>
+    <tr><td>file</td><td>Creates, deletes, or sets permissions on files and directories.</td></tr>
+    <tr><td>user</td><td>Creates or manages Linux user accounts.</td></tr>
+    <tr><td>shell / command</td><td>Runs a raw shell command on the target server.</td></tr>
+    <tr><td>template</td><td>Copies a file with variables substituted (Jinja2 templates).</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Task — A Single Step</h2>
+<p>A Task is a single instruction that calls a Module with specific parameters.</p>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">Example Task</span></div>
+  <pre><span class="hl-comment"># Install nginx using the "apt" module</span>
+<span class="hl-key">- name:</span> <span class="hl-str">Install nginx web server</span>
+  <span class="hl-key">apt:</span>
+    <span class="hl-key">name:</span> <span class="hl-val">nginx</span>
+    <span class="hl-key">state:</span> <span class="hl-val">present</span></pre>
+</div>
+
+<h2>Play — Map Tasks to Hosts</h2>
+<p>A Play maps a group of Tasks to a group of hosts from your Inventory. A Play says: <em>"Run these tasks on these servers."</em></p>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">Example Play</span></div>
+  <pre><span class="hl-key">- name:</span> <span class="hl-str">Set up web servers</span>
+  <span class="hl-key">hosts:</span> <span class="hl-val">webservers</span>
+  <span class="hl-key">become:</span> <span class="hl-val">yes</span>
+  <span class="hl-key">tasks:</span>
+    <span class="hl-key">- name:</span> <span class="hl-str">Install nginx</span>
+      <span class="hl-key">apt:</span>
+        <span class="hl-key">name:</span> <span class="hl-val">nginx</span>
+        <span class="hl-key">state:</span> <span class="hl-val">present</span>
+
+    <span class="hl-key">- name:</span> <span class="hl-str">Start nginx service</span>
+      <span class="hl-key">service:</span>
+        <span class="hl-key">name:</span> <span class="hl-val">nginx</span>
+        <span class="hl-key">state:</span> <span class="hl-val">started</span></pre>
+</div>
+
+<h2>Playbook — The Full Recipe</h2>
+<p>A Playbook is a YAML file that contains one or more Plays. It is the top-level file you run with the <code>ansible-playbook</code> command.</p>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">setup-webserver.yml  ← This is the PLAYBOOK</span></div>
+  <pre><span class="hl-comment">---
+# Play 1: Web servers</span>
+<span class="hl-key">- name:</span> <span class="hl-str">Set up web servers</span>
+  <span class="hl-key">hosts:</span> <span class="hl-val">webservers</span>
+  <span class="hl-key">become:</span> <span class="hl-val">yes</span>
+  <span class="hl-key">tasks:</span>
+    <span class="hl-key">- name:</span> <span class="hl-str">Install nginx</span>
+      <span class="hl-key">apt:</span>
+        <span class="hl-key">name:</span> <span class="hl-val">nginx</span>
+        <span class="hl-key">state:</span> <span class="hl-val">present</span>
+
+<span class="hl-comment"># Play 2: Database servers</span>
+<span class="hl-key">- name:</span> <span class="hl-str">Set up database servers</span>
+  <span class="hl-key">hosts:</span> <span class="hl-val">databases</span>
+  <span class="hl-key">become:</span> <span class="hl-val">yes</span>
+  <span class="hl-key">tasks:</span>
+    <span class="hl-key">- name:</span> <span class="hl-str">Install MySQL</span>
+      <span class="hl-key">apt:</span>
+        <span class="hl-key">name:</span> <span class="hl-val">mysql-server</span>
+        <span class="hl-key">state:</span> <span class="hl-val">present</span></pre>
+</div>
+
+<h2>Visual Hierarchy</h2>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">Hierarchy Overview</span></div>
+  <pre>PLAYBOOK  (setup-webserver.yml)
+└── PLAY 1  (targets: webservers)
+│     ├── TASK 1: Install nginx   [uses: apt module]
+│     ├── TASK 2: Start nginx     [uses: service module]
+│     └── TASK 3: Copy config     [uses: copy module]
+│
+└── PLAY 2  (targets: databases)
+      ├── TASK 1: Install MySQL   [uses: apt module]
+      └── TASK 2: Start MySQL     [uses: service module]</pre>
+</div>
+
+<!-- ─── SECTION F ─────────────────────────────────── -->
+<div class="sec-header" id="section-f">
+  <div class="sec-letter">F</div>
+  <div class="sec-title-wrap">
+    <span class="sec-tag">Section F · 40 min</span>
+    <div class="sec-title">Writing &amp; Running Your First Playbook</div>
+  </div>
+</div>
+
+<div class="callout callout-green">
+  <div class="callout-title">🎯 Goal</div>
+  By the end of this section, you will have written a real Ansible Playbook, run it against an EC2 instance, and seen it install and start a web server — automatically!
+</div>
+
+<h2>What We Will Build</h2>
+<p>A Playbook that does the following on an Ubuntu EC2 instance:</p>
+<ol>
+  <li>Updates the package list (like running <code>apt update</code> manually)</li>
+  <li>Installs the nginx web server</li>
+  <li>Starts the nginx service</li>
+  <li>Enables nginx to start automatically on server reboot</li>
+  <li>Creates a custom <code>index.html</code> page to verify it worked</li>
+</ol>
+
+<h2>Step-by-Step Guide</h2>
+
+<h3>Step 1 — Create the Playbook File</h3>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">Terminal</span></div>
+  <pre><span class="hl-cmd">cd ansible-demo</span>
+<span class="hl-cmd">nano setup-webserver.yml</span></pre>
+</div>
+
+<h3>Step 2 — Write the Playbook</h3>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">setup-webserver.yml</span></div>
+  <pre><span class="hl-comment">---
+# Playbook: setup-webserver.yml
+# Purpose: Install and configure nginx on Ubuntu EC2</span>
+
+<span class="hl-key">- name:</span> <span class="hl-str">Set up Nginx Web Server</span>
+  <span class="hl-key">hosts:</span> <span class="hl-val">webservers</span>
+  <span class="hl-key">become:</span> <span class="hl-val">yes</span>
+
+  <span class="hl-key">tasks:</span>
+
+    <span class="hl-key">- name:</span> <span class="hl-str">Update apt package list</span>
+      <span class="hl-key">apt:</span>
+        <span class="hl-key">update_cache:</span> <span class="hl-val">yes</span>
+
+    <span class="hl-key">- name:</span> <span class="hl-str">Install nginx</span>
+      <span class="hl-key">apt:</span>
+        <span class="hl-key">name:</span> <span class="hl-val">nginx</span>
+        <span class="hl-key">state:</span> <span class="hl-val">present</span>
+
+    <span class="hl-key">- name:</span> <span class="hl-str">Start and enable nginx service</span>
+      <span class="hl-key">service:</span>
+        <span class="hl-key">name:</span> <span class="hl-val">nginx</span>
+        <span class="hl-key">state:</span> <span class="hl-val">started</span>
+        <span class="hl-key">enabled:</span> <span class="hl-val">yes</span>
+
+    <span class="hl-key">- name:</span> <span class="hl-str">Create custom index.html</span>
+      <span class="hl-key">copy:</span>
+        <span class="hl-key">content:</span> <span class="hl-str">"&lt;h1&gt;Hello from Ansible! Server: {{ inventory_hostname }}&lt;/h1&gt;"</span>
+        <span class="hl-key">dest:</span> <span class="hl-val">/var/www/html/index.html</span>
+        <span class="hl-key">mode:</span> <span class="hl-str">"0644"</span></pre>
+</div>
+
+<h3>Step 3 — Check Syntax</h3>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">Terminal</span></div>
+  <pre><span class="hl-cmd">ansible-playbook -i inventory.ini setup-webserver.yml --syntax-check</span>
+
+<span class="hl-comment"># Expected output:</span>
+<span class="hl-str">playbook: setup-webserver.yml</span></pre>
+</div>
+
+<h3>Step 4 — Dry Run (Check Mode)</h3>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">Terminal</span></div>
+  <pre><span class="hl-comment"># Simulate without making real changes</span>
+<span class="hl-cmd">ansible-playbook -i inventory.ini setup-webserver.yml --check</span></pre>
+</div>
+
+<h3>Step 5 — Run the Playbook</h3>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">Terminal</span></div>
+  <pre><span class="hl-cmd">ansible-playbook -i inventory.ini setup-webserver.yml</span>
+
+<span class="hl-comment"># Add -v for verbose output</span>
+<span class="hl-cmd">ansible-playbook -i inventory.ini setup-webserver.yml -v</span></pre>
+</div>
+
+<h2>Understanding the Output</h2>
+<div class="code-block">
+  <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-filename">Expected Output</span></div>
+  <pre>PLAY [Set up Nginx Web Server] *****************************
+
+TASK [Gathering Facts] *************************************
+<span class="hl-str">ok: [13.233.45.67]</span>
+
+TASK [Update apt package list] *****************************
+<span class="hl-cmd">changed: [13.233.45.67]</span>
+
+TASK [Install nginx] ***************************************
+<span class="hl-cmd">changed: [13.233.45.67]</span>
+
+TASK [Start and enable nginx service] **********************
+<span class="hl-cmd">changed: [13.233.45.67]</span>
+
+TASK [Create custom index.html] ****************************
+<span class="hl-cmd">changed: [13.233.45.67]</span>
+
+PLAY RECAP *************************************************
+<span class="hl-str">13.233.45.67  : ok=5  changed=4  unreachable=0  failed=0</span></pre>
+</div>
+
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td>ok</td><td>Task ran, nothing changed. Desired state was already in place.</td></tr>
+    <tr><td>changed</td><td>Task ran and made a change on the server.</td></tr>
+    <tr><td>failed</td><td>Task encountered an error. Playbook stops here by default.</td></tr>
+    <tr><td>skipped</td><td>Task was skipped due to a condition (when: clause) not being met.</td></tr>
+    <tr><td>unreachable</td><td>Ansible could not connect to the server. Check SSH and inventory.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-green">
+  <div class="callout-title">🏆 Congratulations!</div>
+  You just automated a server setup with Ansible! Without it, this would have required manually SSH-ing into the server and running 4–5 commands. With Ansible, it was one command — and it works just as easily on 200 servers.
+</div>
+
+<div class="callout callout-blue">
+  <div class="callout-title">✅ Idempotency in Action</div>
+  Run the same playbook again. You'll see <strong>changed=0</strong>. Nginx is already installed and running, so Ansible does nothing. This is idempotency — safe to run multiple times without side effects.
+</div>
+
+<h2>Quick Reference — Common Commands</h2>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Command</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td>ansible all -i inventory.ini -m ping</td><td>Ping all hosts to test connectivity</td></tr>
+    <tr><td>ansible-playbook -i inventory.ini play.yml</td><td>Run a playbook</td></tr>
+    <tr><td>ansible-playbook ... --check</td><td>Dry run — no real changes</td></tr>
+    <tr><td>ansible-playbook ... --syntax-check</td><td>Validate YAML syntax</td></tr>
+    <tr><td>ansible-playbook ... -v</td><td>Verbose output</td></tr>
+    <tr><td>ansible-doc apt</td><td>Show module documentation</td></tr>
+    <tr><td>ansible all -i inventory.ini --list-hosts</td><td>List all hosts in inventory</td></tr>
+  </tbody>
+</table>
+</div>
+
+</main>
+
+<!-- ──────────────────────────────────────────
+     QUIZ SECTION
+──────────────────────────────────────────── -->
+<section class="quiz-section" id="quiz">
+  <div class="quiz-inner">
+
+    <div class="quiz-hero">
+      <div class="section-label">Knowledge Check</div>
+      <h2>Test Your Ansible Skills</h2>
+      <p>10 questions based on everything covered in this training. Select an answer to see the explanation.</p>
+    </div>
+
+    <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="progressFill"></div></div>
+    <div class="quiz-counter" id="quizCounter">0 / 10 answered</div>
+
+    <div id="quizContainer"></div>
+
+    <div class="quiz-score-panel" id="scorePanel">
+      <div class="score-ring">
+        <div class="score-val" id="scoreVal">0</div>
+        <div class="score-total">out of 10</div>
+      </div>
+      <div class="score-title" id="scoreTitle">Well done!</div>
+      <p class="score-msg" id="scoreMsg"></p>
+      <button class="btn-retry" onclick="retryQuiz()">🔄 Retry Quiz</button>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  Ansible Beginner Training Guide &nbsp;·&nbsp; <span>3-Hour Class</span> &nbsp;·&nbsp; Built for absolute beginners
+</footer>
+
+<script>
+const questions = [
+  {
+    q: "What is the primary purpose of Ansible?",
+    options: [
+      "To create virtual machines on cloud platforms",
+      "To automate IT tasks like software installation and server configuration across multiple machines",
+      "To monitor server performance and send alerts",
+      "To write and compile Python applications"
+    ],
+    answer: 1,
+    explanation: "Ansible is an IT automation tool designed to automate repetitive tasks like installing software, managing configurations, and orchestrating deployments across many servers simultaneously."
+  },
+  {
+    q: "Ansible is described as 'agentless'. What does this mean?",
+    options: [
+      "Ansible runs without any human interaction",
+      "Ansible does not need any special software installed on the target (managed) servers",
+      "Ansible has no user interface",
+      "Ansible does not support Windows servers"
+    ],
+    answer: 1,
+    explanation: "Agentless means Ansible connects to managed nodes using standard SSH — no special Ansible software (agent) needs to be installed on the target machines. This makes setup much simpler."
+  },
+  {
+    q: "What is 'idempotency' in the context of Ansible?",
+    options: [
+      "Running a playbook will always make changes every time it is executed",
+      "Ansible can only be run once per server",
+      "Running the same playbook multiple times is safe — it only makes changes when the desired state has not yet been reached",
+      "Ansible automatically backs up servers before making any changes"
+    ],
+    answer: 2,
+    explanation: "Idempotency means if you run a playbook and nginx is already installed, Ansible skips the install step (status: ok instead of changed). Re-running the same playbook will not cause double-installations or misconfigurations."
+  },
+  {
+    q: "On Windows, what must you install before you can install Ansible?",
+    options: [
+      "Docker Desktop",
+      "Git Bash",
+      "WSL — Windows Subsystem for Linux",
+      "Python for Windows"
+    ],
+    answer: 2,
+    explanation: "Ansible cannot be installed directly on Windows. WSL (Windows Subsystem for Linux) provides a Linux environment inside Windows, and you install Ansible inside that Linux environment."
+  },
+  {
+    q: "In Ansible's architecture, what is the 'Control Node'?",
+    options: [
+      "The server with the highest CPU that controls other servers",
+      "Any server that has Python installed on it",
+      "The machine where Ansible is installed and from which you run Ansible commands",
+      "A dedicated Ansible server provided by Red Hat"
+    ],
+    answer: 2,
+    explanation: "The Control Node is your own machine (laptop or automation server) where Ansible is installed. You run all ansible and ansible-playbook commands from here. The managed nodes (target servers) do not have Ansible installed."
+  },
+  {
+    q: "What is the correct Ansible command to test connectivity to all hosts in your inventory?",
+    options: [
+      "ansible all -i inventory.ini -m connect",
+      "ansible all -i inventory.ini -m ping",
+      "ansible-playbook -i inventory.ini --test",
+      "ansible check -i inventory.ini --all"
+    ],
+    answer: 1,
+    explanation: "The ping module tests whether Ansible can connect to hosts. The command 'ansible all -i inventory.ini -m ping' tells Ansible to target all hosts (-i specifies the inventory file) and use the ping module (-m ping). A successful result returns 'pong'."
+  },
+  {
+    q: "In an INI inventory file, what does [webservers] represent?",
+    options: [
+      "A comment line that is ignored by Ansible",
+      "A configuration block for the nginx web server",
+      "A group name — all hosts listed below it belong to this group until the next group header",
+      "The hostname of the primary web server"
+    ],
+    answer: 2,
+    explanation: "In INI format, square brackets define group names. Any IP addresses or hostnames listed below [webservers] belong to that group. You can target the whole group with 'ansible webservers -i inventory.ini ...'."
+  },
+  {
+    q: "What is the relationship between a Module, a Task, a Play, and a Playbook?",
+    options: [
+      "They are four different names for the same thing",
+      "A Module contains Tasks, Tasks contain Plays, and Plays make up a Playbook",
+      "A Playbook contains Plays; each Play contains Tasks; each Task calls a Module",
+      "A Playbook is a Task that runs multiple Modules in a Play"
+    ],
+    answer: 2,
+    explanation: "The hierarchy goes: Playbook → Play → Task → Module. A Playbook is the YAML file containing one or more Plays. Each Play targets a group of hosts and contains Tasks. Each Task calls a Module (like apt, service, copy) to do actual work."
+  },
+  {
+    q: "In playbook output, what does a 'changed' status on a task mean?",
+    options: [
+      "The task encountered an error and stopped the playbook",
+      "The task ran successfully and actually made a change on the target server",
+      "The task was skipped because a condition was not met",
+      "The task is still running and hasn't finished yet"
+    ],
+    answer: 1,
+    explanation: "'changed' means the task ran successfully AND it had to make a real change on the server (e.g., it installed a package that wasn't there). 'ok' means the task ran but found the server was already in the desired state — so nothing changed."
+  },
+  {
+    q: "What flag would you add to ansible-playbook to simulate a run without making any real changes on the servers?",
+    options: [
+      "--simulate",
+      "--dry",
+      "--check",
+      "--test-only"
+    ],
+    answer: 2,
+    explanation: "The --check flag enables 'check mode' (also called a dry run). Ansible reports what it WOULD change without actually making any changes. This is a safe way to verify your playbook before running it for real on production servers."
+  }
+];
+
+let answered = 0;
+let score = 0;
+
+function buildQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  answered = 0;
+  score = 0;
+  updateProgress();
+  document.getElementById('scorePanel').classList.remove('visible');
+
+  questions.forEach((q, i) => {
+    const letters = ['A', 'B', 'C', 'D'];
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    card.id = `q${i}`;
+    card.style.animationDelay = `${i * 0.05}s`;
+
+    const optionsHTML = q.options.map((opt, j) => `
+      <button class="quiz-option" data-letter="${letters[j]}" data-q="${i}" data-opt="${j}" onclick="selectAnswer(${i}, ${j})">
+        ${opt}
+      </button>
+    `).join('');
+
+    card.innerHTML = `
+      <div class="quiz-q-num">Question ${i + 1} of ${questions.length}</div>
+      <div class="quiz-question">${q.q}</div>
+      <div class="quiz-options">${optionsHTML}</div>
+      <div class="quiz-explanation" id="exp${i}">
+        <strong>${q.options[q.answer]}</strong> is correct. ${q.explanation}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function selectAnswer(qIdx, optIdx) {
+  const card = document.getElementById(`q${qIdx}`);
+  if (card.classList.contains('answered-correct') || card.classList.contains('answered-wrong')) return;
+
+  const q = questions[qIdx];
+  const buttons = card.querySelectorAll('.quiz-option');
+
+  buttons.forEach(btn => btn.disabled = true);
+
+  const chosen = card.querySelector(`[data-opt="${optIdx}"]`);
+  const correct = card.querySelector(`[data-opt="${q.answer}"]`);
+
+  if (optIdx === q.answer) {
+    chosen.classList.add('correct');
+    card.classList.add('answered-correct');
+    score++;
+  } else {
+    chosen.classList.add('wrong');
+    correct.classList.add('show-correct');
+    card.classList.add('answered-wrong');
+  }
+
+  document.getElementById(`exp${qIdx}`).classList.add('visible');
+  answered++;
+  updateProgress();
+
+  if (answered === questions.length) {
+    setTimeout(showScore, 600);
+  }
+}
+
+function updateProgress() {
+  document.getElementById('progressFill').style.width = `${(answered / questions.length) * 100}%`;
+  document.getElementById('quizCounter').textContent = `${answered} / ${questions.length} answered`;
+}
+
+function showScore() {
+  const panel = document.getElementById('scorePanel');
+  panel.classList.add('visible');
+  document.getElementById('scoreVal').textContent = score;
+
+  let title, msg;
+  if (score === 10) {
+    title = '🏆 Perfect Score!';
+    msg = 'Outstanding! You have mastered the Ansible fundamentals. You are ready for the next level.';
+  } else if (score >= 8) {
+    title = '🎉 Excellent Work!';
+    msg = 'You have a strong grasp of Ansible concepts. Review the questions you missed and you\'ll be an expert.';
+  } else if (score >= 6) {
+    title = '👍 Good Effort!';
+    msg = 'Solid foundation! Go back over the sections where you stumbled and re-read the examples.';
+  } else if (score >= 4) {
+    title = '📚 Keep Studying';
+    msg = 'Ansible takes practice. Re-read sections C, D, E, and F — pay special attention to the hands-on demos.';
+  } else {
+    title = '🔄 Try Again!';
+    msg = 'Don\'t worry — everyone starts somewhere. Read through the guide carefully and try again!';
+  }
+
+  if (score < 10) {
+    const ring = document.querySelector('.score-ring');
+    ring.style.borderColor = score >= 6 ? 'var(--gold)' : 'var(--accent)';
+    document.getElementById('scoreVal').style.color = score >= 6 ? 'var(--gold)' : 'var(--accent)';
+    ring.style.boxShadow = score >= 6
+      ? '0 0 40px rgba(245,158,11,0.2)'
+      : '0 0 40px rgba(249,115,22,0.2)';
+  }
+
+  document.getElementById('scoreTitle').textContent = title;
+  document.getElementById('scoreMsg').textContent = msg;
+
+  panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function retryQuiz() {
+  buildQuiz();
+  document.getElementById('quizContainer').scrollIntoView({ behavior: 'smooth' });
+}
+
+buildQuiz();
+</script>
+</body>
+</html>
