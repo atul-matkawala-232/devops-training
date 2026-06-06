@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS VPC — Hands-On Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --border: #1e2d45;
+    --accent: #f59e0b;
+    --accent2: #06b6d4;
+    --accent3: #10b981;
+    --accent4: #8b5cf6;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --code-bg: #0d1117;
+    --tag-vpc: #1d4ed8;
+    --tag-subnet: #15803d;
+    --tag-rt: #9333ea;
+    --tag-igw: #b45309;
+    --tag-peer: #0e7490;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ── Starfield bg ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.15) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 15%, rgba(255,255,255,.1) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 75%, rgba(255,255,255,.12) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 60%, rgba(255,255,255,.08) 0%, transparent 100%),
+      radial-gradient(1px 1px at 10% 85%, rgba(255,255,255,.1) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Layout ── */
+  .wrapper { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 32px 0 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .sidebar-logo {
+    padding: 0 24px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  .sidebar-logo .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #000;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .sidebar-logo h2 {
+    font-size: 17px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.3;
+  }
+
+  .sidebar-logo h2 span { color: var(--accent2); }
+
+  .nav-section { padding: 0 12px 4px; }
+  .nav-label {
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 4px 12px 6px;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: all .15s;
+    cursor: pointer;
+  }
+
+  .nav-link:hover { background: var(--surface2); color: #fff; }
+  .nav-link.active { background: rgba(245,158,11,.12); color: var(--accent); }
+
+  .nav-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── Main content ── */
+  .main {
+    flex: 1;
+    max-width: 860px;
+    padding: 48px 52px;
+    overflow-x: hidden;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    margin-bottom: 56px;
+    animation: fadeUp .6s ease both;
+  }
+
+  .hero-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .hero h1 {
+    font-size: clamp(28px, 4vw, 42px);
+    font-weight: 800;
+    line-height: 1.15;
+    color: #fff;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 em { font-style: normal; color: var(--accent); }
+
+  .hero-desc {
+    color: #94a3b8;
+    font-size: 16px;
+    max-width: 620px;
+    margin-bottom: 28px;
+  }
+
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 64px;
+    animation: fadeUp .5s ease both;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-icon {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  .section h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+  }
+
+  /* ── Concept card ── */
+  .concept-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .concept-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    border-radius: 3px 0 0 3px;
+  }
+
+  .concept-card.vpc::before { background: #1d4ed8; }
+  .concept-card.subnet::before { background: #15803d; }
+  .concept-card.rt::before { background: #9333ea; }
+  .concept-card.igw::before { background: #b45309; }
+  .concept-card.peer::before { background: #0e7490; }
+
+  .concept-card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .concept-card p { color: #94a3b8; font-size: 14px; }
+
+  /* ── Steps ── */
+  .steps { display: flex; flex-direction: column; gap: 20px; }
+
+  .step {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .step-num {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .step-body h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .step-body p { color: #94a3b8; font-size: 14px; margin-bottom: 10px; }
+
+  /* ── Code block ── */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 12px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
+  .code-header {
+    background: #161b2e;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .code-lang {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .copy-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .copy-btn.copied { border-color: var(--accent3); color: var(--accent3); }
+
+  .code-block pre {
+    padding: 16px;
+    overflow-x: auto;
+    line-height: 1.65;
+    color: #a5d6ff;
+    white-space: pre;
+  }
+
+  .code-block pre .c { color: #6e7681; }
+  .code-block pre .k { color: #ff7b72; }
+  .code-block pre .s { color: #a5d6ff; }
+  .code-block pre .n { color: #ffa657; }
+  .code-block pre .v { color: #79c0ff; }
+  .code-block pre .h { color: #7ee787; }
+
+  /* ── Diagram ── */
+  .diagram-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    margin: 24px 0;
+    text-align: center;
+  }
+
+  .diagram-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  svg.diagram { width: 100%; height: auto; }
+
+  /* ── Info box ── */
+  .info-box {
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    display: flex;
+    gap: 12px;
+    font-size: 14px;
+  }
+
+  .info-box.tip { background: rgba(6,182,212,.08); border: 1px solid rgba(6,182,212,.2); color: #67e8f9; }
+  .info-box.warn { background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.2); color: #fcd34d; }
+  .info-box.success { background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.2); color: #6ee7b7; }
+
+  .info-box .icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .info-box .content p { margin-top: 4px; }
+  .info-box .content strong { color: #fff; }
+
+  /* ── Table ── */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin: 16px 0;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th {
+    background: #161b2e;
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 11px 16px; border-bottom: 1px solid rgba(30,45,69,.5); color: #94a3b8; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+  td strong { color: #fff; }
+
+  /* ── Progress ── */
+  .progress-bar {
+    display: flex;
+    gap: 0;
+    height: 4px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 48px;
+  }
+
+  .progress-seg {
+    flex: 1;
+    height: 100%;
+    transition: opacity .3s;
+  }
+
+  /* ── Checklist ── */
+  .checklist { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    color: #94a3b8;
+    font-size: 14px;
+  }
+
+  .check-icon {
+    width: 20px; height: 20px;
+    border-radius: 5px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .section:nth-child(2) { animation-delay: .05s; }
+  .section:nth-child(3) { animation-delay: .1s; }
+  .section:nth-child(4) { animation-delay: .15s; }
+  .section:nth-child(5) { animation-delay: .2s; }
+  .section:nth-child(6) { animation-delay: .25s; }
+  .section:nth-child(7) { animation-delay: .3s; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { padding: 28px 20px; }
+  }
+
+  .arch-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+  /* highlight keyword */
+  .hl { color: var(--accent); font-weight: 600; }
+  .hl2 { color: var(--accent2); font-weight: 600; }
+  .hl3 { color: var(--accent3); font-weight: 600; }
+
+  .pill {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 99px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- ───────── SIDEBAR ───────── -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="badge">Hands-On Lab</div>
+      <h2>AWS <span>VPC</span><br>Complete Guide</h2>
+    </div>
+
+    <span class="nav-label">Introduction</span>
+    <div class="nav-section">
+      <a class="nav-link active" href="#overview" onclick="setActive(this)">
+        <span class="nav-dot" style="background:#f59e0b"></span> Overview
+      </a>
+      <a class="nav-link" href="#concepts" onclick="setActive(this)">
+        <span class="nav-dot" style="background:#94a3b8"></span> Core Concepts
+      </a>
+    </div>
+
+    <span class="nav-label">Labs</span>
+    <div class="nav-section">
+      <a class="nav-link" href="#lab-vpc" onclick="setActive(this)">
+        <span class="nav-dot" style="background:#1d4ed8"></span> Lab 1 — Create VPC
+      </a>
+      <a class="nav-link" href="#lab-subnet" onclick="setActive(this)">
+        <span class="nav-dot" style="background:#15803d"></span> Lab 2 — Subnets
+      </a>
+      <a class="nav-link" href="#lab-rt" onclick="setActive(this)">
+        <span class="nav-dot" style="background:#9333ea"></span> Lab 3 — Route Tables
+      </a>
+      <a class="nav-link" href="#lab-igw" onclick="setActive(this)">
+        <span class="nav-dot" style="background:#b45309"></span> Lab 4 — Internet Gateway
+      </a>
+      <a class="nav-link" href="#lab-peering" onclick="setActive(this)">
+        <span class="nav-dot" style="background:#0e7490"></span> Lab 5 — VPC Peering
+      </a>
+    </div>
+
+    <span class="nav-label">Reference</span>
+    <div class="nav-section">
+      <a class="nav-link" href="#cheatsheet" onclick="setActive(this)">
+        <span class="nav-dot" style="background:#64748b"></span> Cheat Sheet
+      </a>
+      <a class="nav-link" href="#summary" onclick="setActive(this)">
+        <span class="nav-dot" style="background:#64748b"></span> Summary
+      </a>
+    </div>
+  </nav>
+
+  <!-- ───────── MAIN ───────── -->
+  <main class="main">
+
+    <!-- Progress bar -->
+    <div class="progress-bar">
+      <div class="progress-seg" style="background:#f59e0b"></div>
+      <div class="progress-seg" style="background:#1d4ed8"></div>
+      <div class="progress-seg" style="background:#15803d"></div>
+      <div class="progress-seg" style="background:#9333ea"></div>
+      <div class="progress-seg" style="background:#b45309"></div>
+      <div class="progress-seg" style="background:#0e7490"></div>
+    </div>
+
+    <!-- ── HERO ── -->
+    <section class="hero" id="overview">
+      <div class="hero-eyebrow">☁️ Amazon Web Services · Networking</div>
+      <h1>Master AWS <em>VPC</em><br>From Zero to Peering</h1>
+      <p class="hero-desc">
+        A complete, beginner-friendly, hands-on guide to building isolated cloud networks on AWS.
+        You'll create a full network setup step-by-step — no prior cloud networking experience needed.
+      </p>
+      <div class="hero-tags">
+        <span class="tag" style="background:rgba(29,78,216,.2);color:#93c5fd">VPC</span>
+        <span class="tag" style="background:rgba(21,128,61,.2);color:#86efac">Subnets</span>
+        <span class="tag" style="background:rgba(147,51,234,.2);color:#d8b4fe">Route Tables</span>
+        <span class="tag" style="background:rgba(180,83,9,.2);color:#fcd34d">Internet Gateway</span>
+        <span class="tag" style="background:rgba(14,116,144,.2);color:#67e8f9">VPC Peering</span>
+      </div>
+    </section>
+
+    <!-- ── CONCEPTS ── -->
+    <section class="section" id="concepts">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(245,158,11,.12)">🧠</div>
+        <div>
+          <div class="section-num">PRE-LAB</div>
+          <h2>Core Concepts — What Are We Building?</h2>
+        </div>
+      </div>
+
+      <!-- Architecture Diagram -->
+      <div class="diagram-container">
+        <div class="diagram-title">Architecture Overview — What You'll Build</div>
+        <svg class="diagram" viewBox="0 0 720 400" xmlns="http://www.w3.org/2000/svg">
+          <!-- Internet -->
+          <ellipse cx="360" cy="34" rx="90" ry="22" fill="none" stroke="#374151" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="360" y="38" text-anchor="middle" fill="#6b7280" font-family="JetBrains Mono" font-size="12" font-weight="700">🌐 INTERNET</text>
+          <!-- IGW -->
+          <rect x="310" y="70" width="100" height="34" rx="7" fill="rgba(180,83,9,.15)" stroke="#b45309" stroke-width="1.5"/>
+          <text x="360" y="91" text-anchor="middle" fill="#fcd34d" font-family="JetBrains Mono" font-size="11" font-weight="700">Internet GW</text>
+          <!-- Arrow down from igw -->
+          <line x1="360" y1="56" x2="360" y2="70" stroke="#b45309" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+          <!-- VPC A box -->
+          <rect x="40" y="126" width="310" height="250" rx="12" fill="none" stroke="#1d4ed8" stroke-width="1.5" stroke-dasharray="6,3"/>
+          <text x="65" y="148" fill="#60a5fa" font-family="JetBrains Mono" font-size="11" font-weight="700">VPC A — 10.0.0.0/16</text>
+          <!-- Public subnet -->
+          <rect x="60" y="158" width="120" height="80" rx="8" fill="rgba(21,128,61,.12)" stroke="#15803d" stroke-width="1.2"/>
+          <text x="120" y="182" text-anchor="middle" fill="#86efac" font-family="JetBrains Mono" font-size="10" font-weight="700">Public Subnet</text>
+          <text x="120" y="198" text-anchor="middle" fill="#4ade80" font-family="JetBrains Mono" font-size="9">10.0.1.0/24</text>
+          <rect x="80" y="207" width="80" height="20" rx="5" fill="rgba(21,128,61,.25)"/>
+          <text x="120" y="221" text-anchor="middle" fill="#bbf7d0" font-family="JetBrains Mono" font-size="9">EC2 Instance</text>
+          <!-- Private subnet -->
+          <rect x="200" y="158" width="120" height="80" rx="8" fill="rgba(147,51,234,.1)" stroke="#7c3aed" stroke-width="1.2"/>
+          <text x="260" y="182" text-anchor="middle" fill="#d8b4fe" font-family="JetBrains Mono" font-size="10" font-weight="700">Private Subnet</text>
+          <text x="260" y="198" text-anchor="middle" fill="#a78bfa" font-family="JetBrains Mono" font-size="9">10.0.2.0/24</text>
+          <rect x="220" y="207" width="80" height="20" rx="5" fill="rgba(147,51,234,.25)"/>
+          <text x="260" y="221" text-anchor="middle" fill="#ede9fe" font-family="JetBrains Mono" font-size="9">Database</text>
+          <!-- Route Table A -->
+          <rect x="80" y="260" width="190" height="30" rx="7" fill="rgba(147,51,234,.08)" stroke="#7c3aed" stroke-width="1"/>
+          <text x="175" y="279" text-anchor="middle" fill="#c4b5fd" font-family="JetBrains Mono" font-size="10">Route Table A</text>
+          <!-- VPC B box -->
+          <rect x="380" y="126" width="300" height="250" rx="12" fill="none" stroke="#0e7490" stroke-width="1.5" stroke-dasharray="6,3"/>
+          <text x="405" y="148" fill="#67e8f9" font-family="JetBrains Mono" font-size="11" font-weight="700">VPC B — 172.16.0.0/16</text>
+          <!-- Subnet B -->
+          <rect x="420" y="158" width="120" height="80" rx="8" fill="rgba(14,116,144,.12)" stroke="#0e7490" stroke-width="1.2"/>
+          <text x="480" y="182" text-anchor="middle" fill="#a5f3fc" font-family="JetBrains Mono" font-size="10" font-weight="700">Private Subnet</text>
+          <text x="480" y="198" text-anchor="middle" fill="#67e8f9" font-family="JetBrains Mono" font-size="9">172.16.1.0/24</text>
+          <rect x="440" y="207" width="80" height="20" rx="5" fill="rgba(14,116,144,.25)"/>
+          <text x="480" y="221" text-anchor="middle" fill="#cffafe" font-family="JetBrains Mono" font-size="9">App Server</text>
+          <!-- Route Table B -->
+          <rect x="400" y="260" width="190" height="30" rx="7" fill="rgba(14,116,144,.08)" stroke="#0e7490" stroke-width="1"/>
+          <text x="495" y="279" text-anchor="middle" fill="#67e8f9" font-family="JetBrains Mono" font-size="10">Route Table B</text>
+          <!-- Peering -->
+          <rect x="295" y="305" width="130" height="30" rx="7" fill="rgba(245,158,11,.12)" stroke="#f59e0b" stroke-width="1.2"/>
+          <text x="360" y="324" text-anchor="middle" fill="#fde68a" font-family="JetBrains Mono" font-size="10" font-weight="700">VPC Peering</text>
+          <!-- IGW to VPC A arrow -->
+          <line x1="320" y1="104" x2="195" y2="126" stroke="#b45309" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr-amber)"/>
+          <!-- Peering arrows -->
+          <line x1="350" y1="265" x2="330" y2="305" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="4,2"/>
+          <line x1="495" y1="265" x2="400" y2="305" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arr-amber)"/>
+
+          <!-- Defs -->
+          <defs>
+            <marker id="arr-amber" markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#f59e0b"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+
+      <div class="concept-card vpc">
+        <h3>🏗️ VPC (Virtual Private Cloud)</h3>
+        <p>Think of a VPC as your <strong style="color:#93c5fd">own private data center inside AWS</strong>. It's an isolated section of the AWS cloud where you control everything — IP ranges, subnets, routing, and security. Nothing comes in or out unless you explicitly allow it.</p>
+      </div>
+
+      <div class="concept-card subnet">
+        <h3>📦 Subnets</h3>
+        <p>Subnets are <strong style="color:#86efac">smaller divisions inside your VPC</strong>. Think of floors in a building — <span class="hl3">public subnets</span> face the internet (like a lobby), while <span class="hl">private subnets</span> are hidden (like secure offices). Resources placed in different subnets are naturally isolated from each other.</p>
+      </div>
+
+      <div class="concept-card rt">
+        <h3>🗺️ Route Tables</h3>
+        <p>Route tables are <strong style="color:#d8b4fe">traffic maps for your network</strong>. They tell AWS: "If traffic is going to X destination, send it via Y gateway." Every subnet must be associated with a route table. Without proper routes, your resources can't communicate — even within the same VPC.</p>
+      </div>
+
+      <div class="concept-card igw">
+        <h3>🌐 Internet Gateway (IGW)</h3>
+        <p>The Internet Gateway is the <strong style="color:#fcd34d">door between your VPC and the public internet</strong>. Without it, nothing in your VPC can talk to the outside world (and vice versa). You attach one IGW per VPC, then add a route pointing to it in your public subnet's route table.</p>
+      </div>
+
+      <div class="concept-card peer">
+        <h3>🔗 VPC Peering</h3>
+        <p>VPC Peering lets <strong style="color:#67e8f9">two VPCs talk to each other privately</strong> — as if they're on the same network. Traffic stays on the AWS backbone (never touches the public internet). Useful when you have separate VPCs for different teams or environments that need to share resources.</p>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- LAB 1 — VPC -->
+    <!-- ══════════════════════════════════ -->
+    <section class="section" id="lab-vpc">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(29,78,216,.15)">🏗️</div>
+        <div>
+          <div class="section-num">LAB 01</div>
+          <h2>Create Your First VPC</h2>
+        </div>
+      </div>
+
+      <div class="info-box tip">
+        <span class="icon">💡</span>
+        <div class="content">
+          <strong>What we're building:</strong>
+          <p>A VPC named <code>MyLabVPC</code> with CIDR block <code>10.0.0.0/16</code> — giving us 65,536 possible IP addresses to work with.</p>
+        </div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num" style="background:rgba(29,78,216,.15);color:#60a5fa">01</div>
+          <div class="step-body">
+            <h4>Navigate to the VPC Dashboard</h4>
+            <p>Log in to the <strong>AWS Console</strong>. In the search bar at the top, type <span class="hl2">VPC</span> and click on the VPC service. You'll land on the VPC Dashboard.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(29,78,216,.15);color:#60a5fa">02</div>
+          <div class="step-body">
+            <h4>Click "Create VPC"</h4>
+            <p>On the left sidebar click <strong>Your VPCs</strong>, then the orange <strong>Create VPC</strong> button in the top-right.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(29,78,216,.15);color:#60a5fa">03</div>
+          <div class="step-body">
+            <h4>Fill in the VPC Settings</h4>
+            <p>Configure the following fields:</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Field</th><th>Value</th><th>Why?</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Resources to create</strong></td><td>VPC only</td><td>We'll create subnets manually</td></tr>
+                  <tr><td><strong>Name tag</strong></td><td>MyLabVPC</td><td>Identifies your VPC</td></tr>
+                  <tr><td><strong>IPv4 CIDR</strong></td><td>10.0.0.0/16</td><td>Gives us 65K IPs to divide</td></tr>
+                  <tr><td><strong>Tenancy</strong></td><td>Default</td><td>Shared hardware (cheaper)</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(29,78,216,.15);color:#60a5fa">04</div>
+          <div class="step-body">
+            <h4>Create via AWS CLI (Alternative)</h4>
+            <p>If you prefer the command line, here's the equivalent command:</p>
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-lang">bash — AWS CLI</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre><span class="c"># Create the VPC</span>
+aws ec2 create-vpc \
+  <span class="n">--cidr-block</span> <span class="s">10.0.0.0/16</span> \
+  <span class="n">--tag-specifications</span> <span class="s">'ResourceType=vpc,Tags=[{Key=Name,Value=MyLabVPC}]'</span>
+
+<span class="c"># The output will include your new VpcId, e.g.: vpc-0abc12345678</span></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(29,78,216,.15);color:#60a5fa">05</div>
+          <div class="step-body">
+            <h4>Verify It's Created</h4>
+            <p>Your new VPC will appear in the <strong>Your VPCs</strong> list with state <span class="pill" style="background:rgba(16,185,129,.2);color:#6ee7b7">Available</span>. Note down the <strong>VPC ID</strong> — you'll need it in the next labs.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box success">
+        <span class="icon">✅</span>
+        <div class="content">
+          <strong>Lab 1 Complete!</strong>
+          <p>You now have an isolated private network on AWS. It can't communicate with anything yet — that's intentional. Next, we'll divide it into subnets.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- LAB 2 — SUBNETS -->
+    <!-- ══════════════════════════════════ -->
+    <section class="section" id="lab-subnet">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(21,128,61,.15)">📦</div>
+        <div>
+          <div class="section-num">LAB 02</div>
+          <h2>Create Public &amp; Private Subnets</h2>
+        </div>
+      </div>
+
+      <div class="info-box tip">
+        <span class="icon">💡</span>
+        <div class="content">
+          <strong>What we're building:</strong>
+          <p>Two subnets inside <code>MyLabVPC</code> — one public (<code>10.0.1.0/24</code>) for internet-facing resources like web servers, and one private (<code>10.0.2.0/24</code>) for internal resources like databases.</p>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">Subnet CIDR Breakdown</div>
+        <svg class="diagram" viewBox="0 0 680 160" xmlns="http://www.w3.org/2000/svg">
+          <!-- VPC bar -->
+          <rect x="20" y="20" width="640" height="50" rx="8" fill="rgba(29,78,216,.08)" stroke="#1d4ed8" stroke-width="1.5"/>
+          <text x="40" y="49" fill="#60a5fa" font-family="JetBrains Mono" font-size="12" font-weight="700">VPC: 10.0.0.0/16 — 65,536 addresses</text>
+          <!-- Public subnet bar -->
+          <rect x="20" y="88" width="300" height="52" rx="8" fill="rgba(21,128,61,.12)" stroke="#15803d" stroke-width="1.2"/>
+          <text x="40" y="108" fill="#86efac" font-family="JetBrains Mono" font-size="11" font-weight="700">Public Subnet</text>
+          <text x="40" y="126" fill="#4ade80" font-family="JetBrains Mono" font-size="10">10.0.1.0/24 · 256 IPs</text>
+          <!-- Private subnet bar -->
+          <rect x="340" y="88" width="320" height="52" rx="8" fill="rgba(147,51,234,.1)" stroke="#7c3aed" stroke-width="1.2"/>
+          <text x="360" y="108" fill="#d8b4fe" font-family="JetBrains Mono" font-size="11" font-weight="700">Private Subnet</text>
+          <text x="360" y="126" fill="#a78bfa" font-family="JetBrains Mono" font-size="10">10.0.2.0/24 · 256 IPs</text>
+          <!-- Connector lines -->
+          <line x1="170" y1="70" x2="170" y2="88" stroke="#1d4ed8" stroke-width="1" stroke-dasharray="3,2"/>
+          <line x1="500" y1="70" x2="500" y2="88" stroke="#1d4ed8" stroke-width="1" stroke-dasharray="3,2"/>
+        </svg>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num" style="background:rgba(21,128,61,.15);color:#86efac">01</div>
+          <div class="step-body">
+            <h4>Open the Subnets section</h4>
+            <p>In the VPC Dashboard left sidebar, click <strong>Subnets</strong>, then click <strong>Create subnet</strong>.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(21,128,61,.15);color:#86efac">02</div>
+          <div class="step-body">
+            <h4>Create the Public Subnet</h4>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Field</th><th>Value</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>VPC ID</strong></td><td>Select <em>MyLabVPC</em></td></tr>
+                  <tr><td><strong>Subnet name</strong></td><td>PublicSubnet</td></tr>
+                  <tr><td><strong>Availability Zone</strong></td><td>us-east-1a (any AZ)</td></tr>
+                  <tr><td><strong>IPv4 CIDR</strong></td><td>10.0.1.0/24</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(21,128,61,.15);color:#86efac">03</div>
+          <div class="step-body">
+            <h4>Add a second subnet — Private Subnet</h4>
+            <p>Click <strong>Add new subnet</strong> in the same dialog (or repeat the process) and fill in:</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Field</th><th>Value</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Subnet name</strong></td><td>PrivateSubnet</td></tr>
+                  <tr><td><strong>Availability Zone</strong></td><td>us-east-1b (different AZ for HA)</td></tr>
+                  <tr><td><strong>IPv4 CIDR</strong></td><td>10.0.2.0/24</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(21,128,61,.15);color:#86efac">04</div>
+          <div class="step-body">
+            <h4>CLI equivalent</h4>
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-lang">bash — AWS CLI</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre><span class="c"># Replace vpc-XXXXXX with your actual VPC ID</span>
+<span class="k">VPC_ID</span>=<span class="s">vpc-XXXXXX</span>
+
+<span class="c"># Create Public Subnet</span>
+aws ec2 create-subnet \
+  <span class="n">--vpc-id</span> $VPC_ID \
+  <span class="n">--cidr-block</span> <span class="s">10.0.1.0/24</span> \
+  <span class="n">--availability-zone</span> <span class="s">us-east-1a</span> \
+  <span class="n">--tag-specifications</span> <span class="s">'ResourceType=subnet,Tags=[{Key=Name,Value=PublicSubnet}]'</span>
+
+<span class="c"># Create Private Subnet</span>
+aws ec2 create-subnet \
+  <span class="n">--vpc-id</span> $VPC_ID \
+  <span class="n">--cidr-block</span> <span class="s">10.0.2.0/24</span> \
+  <span class="n">--availability-zone</span> <span class="s">us-east-1b</span> \
+  <span class="n">--tag-specifications</span> <span class="s">'ResourceType=subnet,Tags=[{Key=Name,Value=PrivateSubnet}]'</span></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(21,128,61,.15);color:#86efac">05</div>
+          <div class="step-body">
+            <h4>Enable Auto-assign Public IP on PublicSubnet</h4>
+            <p>Select <strong>PublicSubnet</strong> → Actions → <strong>Edit subnet settings</strong> → check <strong>Enable auto-assign public IPv4 address</strong>. This ensures EC2 instances launched here get a public IP automatically.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box warn">
+        <span class="icon">⚠️</span>
+        <div class="content">
+          <strong>Naming ≠ Behavior:</strong>
+          <p>Calling a subnet "Public" doesn't make it public! It only becomes truly public after you attach an Internet Gateway and add a route to it (Labs 3 &amp; 4).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- LAB 3 — ROUTE TABLES -->
+    <!-- ══════════════════════════════════ -->
+    <section class="section" id="lab-rt">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(147,51,234,.15)">🗺️</div>
+        <div>
+          <div class="section-num">LAB 03</div>
+          <h2>Configure Route Tables</h2>
+        </div>
+      </div>
+
+      <div class="info-box tip">
+        <span class="icon">💡</span>
+        <div class="content">
+          <strong>What we're building:</strong>
+          <p>A dedicated <strong>Public Route Table</strong> for <code>PublicSubnet</code> and leaving the <strong>Main Route Table</strong> for <code>PrivateSubnet</code>. Each will have different routing rules.</p>
+        </div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num" style="background:rgba(147,51,234,.15);color:#d8b4fe">01</div>
+          <div class="step-body">
+            <h4>Create the Public Route Table</h4>
+            <p>In the VPC Dashboard, click <strong>Route Tables</strong> → <strong>Create route table</strong>:</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Field</th><th>Value</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Name</strong></td><td>PublicRouteTable</td></tr>
+                  <tr><td><strong>VPC</strong></td><td>MyLabVPC</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(147,51,234,.15);color:#d8b4fe">02</div>
+          <div class="step-body">
+            <h4>Associate PublicSubnet with this Route Table</h4>
+            <p>Select <strong>PublicRouteTable</strong> → <strong>Subnet associations</strong> tab → <strong>Edit subnet associations</strong> → check <strong>PublicSubnet</strong> → Save.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(147,51,234,.15);color:#d8b4fe">03</div>
+          <div class="step-body">
+            <h4>Understand the Default Route (Local)</h4>
+            <p>Every route table gets a <strong>local route</strong> by default — it lets all resources within the same VPC communicate freely. You'll see it listed as:</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Destination</th><th>Target</th><th>Meaning</th></tr></thead>
+                <tbody>
+                  <tr><td><code>10.0.0.0/16</code></td><td><code>local</code></td><td>All VPC traffic stays inside</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(147,51,234,.15);color:#d8b4fe">04</div>
+          <div class="step-body">
+            <h4>We'll Add the Internet Route in Lab 4</h4>
+            <p>Once the Internet Gateway is created, we'll come back here and add the route <code>0.0.0.0/0 → IGW</code>. Think of <code>0.0.0.0/0</code> as "everything else" — the default route for internet-bound traffic.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(147,51,234,.15);color:#d8b4fe">05</div>
+          <div class="step-body">
+            <h4>CLI equivalent</h4>
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-lang">bash — AWS CLI</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre><span class="c"># Create a new route table</span>
+aws ec2 create-route-table \
+  <span class="n">--vpc-id</span> $VPC_ID \
+  <span class="n">--tag-specifications</span> <span class="s">'ResourceType=route-table,Tags=[{Key=Name,Value=PublicRouteTable}]'</span>
+
+<span class="c"># Save the RouteTableId from output, e.g.: rtb-0abc123456</span>
+<span class="k">RT_ID</span>=<span class="s">rtb-XXXXXX</span>
+
+<span class="c"># Associate with Public Subnet</span>
+aws ec2 associate-route-table \
+  <span class="n">--route-table-id</span> $RT_ID \
+  <span class="n">--subnet-id</span> $PUBLIC_SUBNET_ID</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">Route Table Logic — How AWS Picks a Route</div>
+        <svg class="diagram" viewBox="0 0 640 140" xmlns="http://www.w3.org/2000/svg">
+          <rect x="20" y="20" width="100" height="100" rx="8" fill="rgba(147,51,234,.1)" stroke="#7c3aed" stroke-width="1.2"/>
+          <text x="70" y="68" text-anchor="middle" fill="#d8b4fe" font-family="JetBrains Mono" font-size="10" font-weight="700">Outbound</text>
+          <text x="70" y="84" text-anchor="middle" fill="#d8b4fe" font-family="JetBrains Mono" font-size="10" font-weight="700">Traffic</text>
+          <line x1="120" y1="70" x2="150" y2="70" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+          <rect x="150" y="30" width="160" height="80" rx="8" fill="rgba(147,51,234,.08)" stroke="#7c3aed" stroke-width="1"/>
+          <text x="230" y="56" text-anchor="middle" fill="#c4b5fd" font-family="JetBrains Mono" font-size="10" font-weight="700">Route Table</text>
+          <text x="230" y="74" text-anchor="middle" fill="#a78bfa" font-family="JetBrains Mono" font-size="9">10.0.0.0/16 → local</text>
+          <text x="230" y="90" text-anchor="middle" fill="#a78bfa" font-family="JetBrains Mono" font-size="9">0.0.0.0/0  → IGW</text>
+          <!-- arrows out -->
+          <line x1="310" y1="58" x2="380" y2="30" stroke="#15803d" stroke-width="1.2" marker-end="url(#arr-green)"/>
+          <rect x="380" y="10" width="110" height="36" rx="7" fill="rgba(21,128,61,.1)" stroke="#15803d" stroke-width="1"/>
+          <text x="435" y="32" text-anchor="middle" fill="#86efac" font-family="JetBrains Mono" font-size="10">Local VPC</text>
+          <line x1="310" y1="82" x2="380" y2="100" stroke="#b45309" stroke-width="1.2" marker-end="url(#arr-amber2)"/>
+          <rect x="380" y="82" width="110" height="36" rx="7" fill="rgba(180,83,9,.1)" stroke="#b45309" stroke-width="1"/>
+          <text x="435" y="104" text-anchor="middle" fill="#fcd34d" font-family="JetBrains Mono" font-size="10">Internet (IGW)</text>
+          <defs>
+            <marker id="arr-purple" markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#7c3aed"/>
+            </marker>
+            <marker id="arr-green" markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#15803d"/>
+            </marker>
+            <marker id="arr-amber2" markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#b45309"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- LAB 4 — INTERNET GATEWAY -->
+    <!-- ══════════════════════════════════ -->
+    <section class="section" id="lab-igw">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(180,83,9,.15)">🌐</div>
+        <div>
+          <div class="section-num">LAB 04</div>
+          <h2>Attach an Internet Gateway</h2>
+        </div>
+      </div>
+
+      <div class="info-box tip">
+        <span class="icon">💡</span>
+        <div class="content">
+          <strong>Two-step process:</strong>
+          <p>Creating an IGW is not enough. You must (1) <strong>create</strong> the IGW, (2) <strong>attach</strong> it to your VPC, and (3) <strong>add a route</strong> in the public route table pointing to it.</p>
+        </div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num" style="background:rgba(180,83,9,.15);color:#fcd34d">01</div>
+          <div class="step-body">
+            <h4>Create the Internet Gateway</h4>
+            <p>In VPC Dashboard → <strong>Internet Gateways</strong> → <strong>Create internet gateway</strong>:</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Field</th><th>Value</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Name tag</strong></td><td>MyLabIGW</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>After creation, notice the state is <span class="pill" style="background:rgba(239,68,68,.15);color:#fca5a5">Detached</span> — it's floating, not connected to anything yet.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(180,83,9,.15);color:#fcd34d">02</div>
+          <div class="step-body">
+            <h4>Attach IGW to MyLabVPC</h4>
+            <p>Select <strong>MyLabIGW</strong> → Actions → <strong>Attach to VPC</strong> → choose <strong>MyLabVPC</strong> → Attach. The state changes to <span class="pill" style="background:rgba(16,185,129,.15);color:#6ee7b7">Attached</span>.</p>
+            <div class="info-box warn" style="margin-top:10px">
+              <span class="icon">⚠️</span>
+              <div class="content"><strong>One VPC, one IGW.</strong> <p>A VPC can only have one Internet Gateway attached at a time.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(180,83,9,.15);color:#fcd34d">03</div>
+          <div class="step-body">
+            <h4>Add the Internet Route to PublicRouteTable</h4>
+            <p>Go back to <strong>Route Tables</strong> → select <strong>PublicRouteTable</strong> → <strong>Routes</strong> tab → <strong>Edit routes</strong> → <strong>Add route</strong>:</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Destination</th><th>Target</th><th>Meaning</th></tr></thead>
+                <tbody>
+                  <tr><td><code>10.0.0.0/16</code></td><td><code>local</code></td><td>VPC internal (auto-added)</td></tr>
+                  <tr><td><strong><code>0.0.0.0/0</code></strong></td><td><strong>igw-XXXXXX</strong></td><td>All internet traffic → IGW</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(180,83,9,.15);color:#fcd34d">04</div>
+          <div class="step-body">
+            <h4>CLI equivalent (all three steps)</h4>
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-lang">bash — AWS CLI</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre><span class="c"># Step 1: Create IGW</span>
+aws ec2 create-internet-gateway \
+  <span class="n">--tag-specifications</span> <span class="s">'ResourceType=internet-gateway,Tags=[{Key=Name,Value=MyLabIGW}]'</span>
+
+<span class="k">IGW_ID</span>=<span class="s">igw-XXXXXX</span>   <span class="c"># from output</span>
+
+<span class="c"># Step 2: Attach to VPC</span>
+aws ec2 attach-internet-gateway \
+  <span class="n">--internet-gateway-id</span> $IGW_ID \
+  <span class="n">--vpc-id</span> $VPC_ID
+
+<span class="c"># Step 3: Add route (0.0.0.0/0 → IGW) to Public Route Table</span>
+aws ec2 create-route \
+  <span class="n">--route-table-id</span> $RT_ID \
+  <span class="n">--destination-cidr-block</span> <span class="s">0.0.0.0/0</span> \
+  <span class="n">--gateway-id</span> $IGW_ID</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(180,83,9,.15);color:#fcd34d">05</div>
+          <div class="step-body">
+            <h4>Verify — Can Resources Reach the Internet?</h4>
+            <p>Launch a test EC2 instance in <strong>PublicSubnet</strong>. Assign a Security Group that allows inbound SSH (port 22) and outbound all traffic. SSH in and try:</p>
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-lang">bash — EC2 Instance</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre><span class="c"># From inside your EC2 instance:</span>
+ping google.com
+
+<span class="c"># Expected output: 64 bytes from ... time=X ms ✅</span>
+<span class="c"># If it fails — check Security Group outbound rules first</span></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box success">
+        <span class="icon">✅</span>
+        <div class="content">
+          <strong>Lab 4 Complete!</strong>
+          <p>Your public subnet can now reach the internet. Your private subnet still has no internet access — that's the correct secure architecture. For private subnet internet access, you'd add a NAT Gateway (not covered in this lab).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- LAB 5 — VPC PEERING -->
+    <!-- ══════════════════════════════════ -->
+    <section class="section" id="lab-peering">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(14,116,144,.15)">🔗</div>
+        <div>
+          <div class="section-num">LAB 05</div>
+          <h2>VPC Peering — Connect Two VPCs</h2>
+        </div>
+      </div>
+
+      <div class="info-box tip">
+        <span class="icon">💡</span>
+        <div class="content">
+          <strong>Scenario:</strong>
+          <p>You have <code>MyLabVPC (10.0.0.0/16)</code> and want to connect it with a second VPC <code>VPC-B (172.16.0.0/16)</code>. Resources in both VPCs should be able to communicate using private IPs.</p>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">VPC Peering — 4-Step Setup</div>
+        <svg class="diagram" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg">
+          <rect x="20" y="30" width="140" height="60" rx="8" fill="rgba(29,78,216,.1)" stroke="#1d4ed8" stroke-width="1.5"/>
+          <text x="90" y="58" text-anchor="middle" fill="#60a5fa" font-family="JetBrains Mono" font-size="11" font-weight="700">VPC-A</text>
+          <text x="90" y="75" text-anchor="middle" fill="#93c5fd" font-family="JetBrains Mono" font-size="9">10.0.0.0/16</text>
+          <!-- step bubbles -->
+          <circle cx="220" cy="60" r="18" fill="rgba(245,158,11,.15)" stroke="#f59e0b" stroke-width="1.2"/>
+          <text x="220" y="64" text-anchor="middle" fill="#fde68a" font-family="JetBrains Mono" font-size="10" font-weight="700">1</text>
+          <text x="220" y="96" text-anchor="middle" fill="#f59e0b" font-family="JetBrains Mono" font-size="9">Request</text>
+          <circle cx="310" cy="60" r="18" fill="rgba(245,158,11,.15)" stroke="#f59e0b" stroke-width="1.2"/>
+          <text x="310" y="64" text-anchor="middle" fill="#fde68a" font-family="JetBrains Mono" font-size="10" font-weight="700">2</text>
+          <text x="310" y="96" text-anchor="middle" fill="#f59e0b" font-family="JetBrains Mono" font-size="9">Accept</text>
+          <circle cx="400" cy="60" r="18" fill="rgba(245,158,11,.15)" stroke="#f59e0b" stroke-width="1.2"/>
+          <text x="400" y="64" text-anchor="middle" fill="#fde68a" font-family="JetBrains Mono" font-size="10" font-weight="700">3</text>
+          <text x="400" y="96" text-anchor="middle" fill="#f59e0b" font-family="JetBrains Mono" font-size="9">Routes A</text>
+          <circle cx="490" cy="60" r="18" fill="rgba(245,158,11,.15)" stroke="#f59e0b" stroke-width="1.2"/>
+          <text x="490" y="64" text-anchor="middle" fill="#fde68a" font-family="JetBrains Mono" font-size="10" font-weight="700">4</text>
+          <text x="490" y="96" text-anchor="middle" fill="#f59e0b" font-family="JetBrains Mono" font-size="9">Routes B</text>
+          <line x1="160" y1="60" x2="202" y2="60" stroke="#f59e0b" stroke-width="1.2" marker-end="url(#arr-amb3)"/>
+          <line x1="238" y1="60" x2="292" y2="60" stroke="#f59e0b" stroke-width="1.2" marker-end="url(#arr-amb3)"/>
+          <line x1="328" y1="60" x2="382" y2="60" stroke="#f59e0b" stroke-width="1.2" marker-end="url(#arr-amb3)"/>
+          <line x1="418" y1="60" x2="472" y2="60" stroke="#f59e0b" stroke-width="1.2" marker-end="url(#arr-amb3)"/>
+          <line x1="508" y1="60" x2="524" y2="60" stroke="#f59e0b" stroke-width="1.2" marker-end="url(#arr-amb3)"/>
+          <rect x="524" y="30" width="140" height="60" rx="8" fill="rgba(14,116,144,.1)" stroke="#0e7490" stroke-width="1.5"/>
+          <text x="594" y="58" text-anchor="middle" fill="#67e8f9" font-family="JetBrains Mono" font-size="11" font-weight="700">VPC-B</text>
+          <text x="594" y="75" text-anchor="middle" fill="#a5f3fc" font-family="JetBrains Mono" font-size="9">172.16.0.0/16</text>
+          <defs>
+            <marker id="arr-amb3" markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#f59e0b"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num" style="background:rgba(14,116,144,.15);color:#67e8f9">01</div>
+          <div class="step-body">
+            <h4>Create VPC-B (the second VPC)</h4>
+            <p>Repeat Lab 1 to create a second VPC. Use a <strong>non-overlapping CIDR</strong> — this is critical!</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Field</th><th>Value</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Name</strong></td><td>VPC-B</td></tr>
+                  <tr><td><strong>CIDR</strong></td><td>172.16.0.0/16</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="info-box warn" style="margin-top:10px">
+              <span class="icon">⚠️</span>
+              <div class="content"><strong>Non-overlapping CIDRs required.</strong><p>If VPC-A is <code>10.0.0.0/16</code>, VPC-B cannot use any range that overlaps — like <code>10.0.1.0/24</code>. Use a completely different range like <code>172.16.0.0/16</code>.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(14,116,144,.15);color:#67e8f9">02</div>
+          <div class="step-body">
+            <h4>Request the Peering Connection (from VPC-A)</h4>
+            <p>In VPC Dashboard → <strong>Peering connections</strong> → <strong>Create peering connection</strong>:</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Field</th><th>Value</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Name</strong></td><td>VPC-A-to-B-Peering</td></tr>
+                  <tr><td><strong>Requester VPC</strong></td><td>MyLabVPC (VPC-A)</td></tr>
+                  <tr><td><strong>Accepter account</strong></td><td>My account (same account)</td></tr>
+                  <tr><td><strong>Accepter VPC</strong></td><td>VPC-B</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(14,116,144,.15);color:#67e8f9">03</div>
+          <div class="step-body">
+            <h4>Accept the Peering Request (from VPC-B side)</h4>
+            <p>The peering connection shows as <span class="pill" style="background:rgba(245,158,11,.15);color:#fde68a">Pending Acceptance</span>. Select it → Actions → <strong>Accept request</strong>. It becomes <span class="pill" style="background:rgba(16,185,129,.15);color:#6ee7b7">Active</span>.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(14,116,144,.15);color:#67e8f9">04</div>
+          <div class="step-body">
+            <h4>Update Route Table in VPC-A</h4>
+            <p>Go to VPC-A's route table → Add a route to reach VPC-B via the peering connection:</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Destination</th><th>Target</th></tr></thead>
+                <tbody>
+                  <tr><td><code>172.16.0.0/16</code></td><td>pcx-XXXXXX (Peering Connection)</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(14,116,144,.15);color:#67e8f9">05</div>
+          <div class="step-body">
+            <h4>Update Route Table in VPC-B</h4>
+            <p>Now go to VPC-B's route table and add the reverse route — so VPC-B can reply back to VPC-A. Peering is <strong>not transitive</strong> — you must add routes on both sides:</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Destination</th><th>Target</th></tr></thead>
+                <tbody>
+                  <tr><td><code>10.0.0.0/16</code></td><td>pcx-XXXXXX (same Peering Connection)</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(14,116,144,.15);color:#67e8f9">06</div>
+          <div class="step-body">
+            <h4>CLI equivalent</h4>
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-lang">bash — AWS CLI</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre><span class="c"># Create peering connection request</span>
+aws ec2 create-vpc-peering-connection \
+  <span class="n">--vpc-id</span> $VPC_A_ID \
+  <span class="n">--peer-vpc-id</span> $VPC_B_ID
+
+<span class="k">PCX_ID</span>=<span class="s">pcx-XXXXXX</span>   <span class="c"># from output</span>
+
+<span class="c"># Accept the peering connection</span>
+aws ec2 accept-vpc-peering-connection \
+  <span class="n">--vpc-peering-connection-id</span> $PCX_ID
+
+<span class="c"># Add route in VPC-A's route table → VPC-B CIDR via peering</span>
+aws ec2 create-route \
+  <span class="n">--route-table-id</span> $VPC_A_RT_ID \
+  <span class="n">--destination-cidr-block</span> <span class="s">172.16.0.0/16</span> \
+  <span class="n">--vpc-peering-connection-id</span> $PCX_ID
+
+<span class="c"># Add route in VPC-B's route table → VPC-A CIDR via peering</span>
+aws ec2 create-route \
+  <span class="n">--route-table-id</span> $VPC_B_RT_ID \
+  <span class="n">--destination-cidr-block</span> <span class="s">10.0.0.0/16</span> \
+  <span class="n">--vpc-peering-connection-id</span> $PCX_ID</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num" style="background:rgba(14,116,144,.15);color:#67e8f9">07</div>
+          <div class="step-body">
+            <h4>Test the Peering Connection</h4>
+            <p>Launch an EC2 in each VPC. From the instance in VPC-A, ping the private IP of the instance in VPC-B:</p>
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-lang">bash — EC2 in VPC-A</span>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre><span class="c"># Replace with the actual private IP of EC2 in VPC-B</span>
+ping 172.16.1.50
+
+<span class="c"># If it fails, check Security Groups on both instances</span>
+<span class="c"># The Security Group of VPC-B instance must allow ICMP from 10.0.0.0/16</span></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box success">
+        <span class="icon">✅</span>
+        <div class="content">
+          <strong>Lab 5 Complete!</strong>
+          <p>The two VPCs are now privately connected. Traffic between them never leaves the AWS network. Remember: peering is not transitive — if you add VPC-C, you'd need separate peering connections (A↔C and B↔C).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- CHEAT SHEET -->
+    <!-- ══════════════════════════════════ -->
+    <section class="section" id="cheatsheet">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(245,158,11,.1)">⚡</div>
+        <div>
+          <div class="section-num">REFERENCE</div>
+          <h2>Quick Cheat Sheet</h2>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Concept</th><th>Analogy</th><th>Key Limits</th><th>CLI Command</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong style="color:#93c5fd">VPC</strong></td>
+              <td>Your private data center in the cloud</td>
+              <td>5 per region (default)</td>
+              <td><code style="font-family:JetBrains Mono;font-size:11px">aws ec2 create-vpc</code></td>
+            </tr>
+            <tr>
+              <td><strong style="color:#86efac">Subnet</strong></td>
+              <td>Floors/rooms inside the building</td>
+              <td>200 per VPC (default)</td>
+              <td><code style="font-family:JetBrains Mono;font-size:11px">aws ec2 create-subnet</code></td>
+            </tr>
+            <tr>
+              <td><strong style="color:#d8b4fe">Route Table</strong></td>
+              <td>GPS/traffic map for packets</td>
+              <td>200 per VPC (default)</td>
+              <td><code style="font-family:JetBrains Mono;font-size:11px">aws ec2 create-route-table</code></td>
+            </tr>
+            <tr>
+              <td><strong style="color:#fcd34d">Internet GW</strong></td>
+              <td>Front door to the internet</td>
+              <td>1 per VPC</td>
+              <td><code style="font-family:JetBrains Mono;font-size:11px">aws ec2 create-internet-gateway</code></td>
+            </tr>
+            <tr>
+              <td><strong style="color:#67e8f9">VPC Peering</strong></td>
+              <td>Private tunnel between two buildings</td>
+              <td>125 active per VPC</td>
+              <td><code style="font-family:JetBrains Mono;font-size:11px">aws ec2 create-vpc-peering-connection</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="concept-card" style="border-left: 3px solid #ef4444; margin-top:24px;">
+        <h3>🚨 Common Mistakes to Avoid</h3>
+        <ul class="checklist" style="margin-top:12px">
+          <li>
+            <div class="check-icon" style="background:rgba(239,68,68,.15);color:#fca5a5">✗</div>
+            <span><strong style="color:#fff">Overlapping CIDRs in VPC Peering</strong> — VPC-A: 10.0.0.0/16 and VPC-B: 10.0.1.0/24 overlap, peering will fail.</span>
+          </li>
+          <li>
+            <div class="check-icon" style="background:rgba(239,68,68,.15);color:#fca5a5">✗</div>
+            <span><strong style="color:#fff">Missing the route after attaching IGW</strong> — Attaching the IGW is not enough; you MUST add <code>0.0.0.0/0 → IGW</code> in the route table.</span>
+          </li>
+          <li>
+            <div class="check-icon" style="background:rgba(239,68,68,.15);color:#fca5a5">✗</div>
+            <span><strong style="color:#fff">One-sided peering routes</strong> — Adding the route only in VPC-A means VPC-A can send but VPC-B can't respond. Add routes on both sides.</span>
+          </li>
+          <li>
+            <div class="check-icon" style="background:rgba(239,68,68,.15);color:#fca5a5">✗</div>
+            <span><strong style="color:#fff">Security Groups blocking traffic</strong> — Even with correct routing, Security Groups can block traffic. Always check SG inbound rules too.</span>
+          </li>
+          <li>
+            <div class="check-icon" style="background:rgba(239,68,68,.15);color:#fca5a5">✗</div>
+            <span><strong style="color:#fff">Forgetting to associate subnet with route table</strong> — Subnets default to the Main Route Table. Explicitly associate them with your custom route table.</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- SUMMARY -->
+    <!-- ══════════════════════════════════ -->
+    <section class="section" id="summary">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(16,185,129,.1)">🎓</div>
+        <div>
+          <div class="section-num">SUMMARY</div>
+          <h2>What You've Built</h2>
+        </div>
+      </div>
+
+      <ul class="checklist">
+        <li>
+          <div class="check-icon" style="background:rgba(29,78,216,.15);color:#60a5fa">✓</div>
+          <span><strong style="color:#fff">VPC (MyLabVPC)</strong> — An isolated private network with CIDR <code>10.0.0.0/16</code>, giving you full control over networking.</span>
+        </li>
+        <li>
+          <div class="check-icon" style="background:rgba(21,128,61,.15);color:#86efac">✓</div>
+          <span><strong style="color:#fff">Two Subnets</strong> — A public subnet (<code>10.0.1.0/24</code>) for internet-facing workloads and a private subnet (<code>10.0.2.0/24</code>) for secure internal resources.</span>
+        </li>
+        <li>
+          <div class="check-icon" style="background:rgba(147,51,234,.15);color:#d8b4fe">✓</div>
+          <span><strong style="color:#fff">Route Tables</strong> — A dedicated Public Route Table associated with the public subnet, controlling traffic flow within and outside the VPC.</span>
+        </li>
+        <li>
+          <div class="check-icon" style="background:rgba(180,83,9,.15);color:#fcd34d">✓</div>
+          <span><strong style="color:#fff">Internet Gateway (MyLabIGW)</strong> — Attached to the VPC with a <code>0.0.0.0/0</code> route, enabling public subnet resources to reach the internet.</span>
+        </li>
+        <li>
+          <div class="check-icon" style="background:rgba(14,116,144,.15);color:#67e8f9">✓</div>
+          <span><strong style="color:#fff">VPC Peering</strong> — A private connection between VPC-A and VPC-B with bidirectional routes, allowing resources to communicate using private IPs.</span>
+        </li>
+      </ul>
+
+      <div class="info-box success" style="margin-top:28px">
+        <span class="icon">🚀</span>
+        <div class="content">
+          <strong>Next Steps to Explore</strong>
+          <p>NAT Gateway (private subnet internet access) · Network ACLs (subnet-level firewall) · VPC Endpoints (private AWS service access) · AWS Transit Gateway (connect many VPCs) · Flow Logs (network traffic monitoring)</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+function setActive(el) {
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre.innerText || pre.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// Highlight active section on scroll
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-link[href]');
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+      });
+    }
+  });
+}, { rootMargin: '-20% 0px -60% 0px' });
+
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
